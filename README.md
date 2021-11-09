@@ -3,8 +3,14 @@
 ## About
 INDELfindR is an R based command line tool for detecting simple and complex insertion deletion (INDEL) variants.
 
-## Installation
+## Setup
+
+#### Requirements
+INDELfindR is compatible with Linux, Unix, and MacOS.
+
 INDELfindR requires R version >= 4.1.0
+
+#### Installation
 
 Install INDELfindR within an R session by installing the INDELfindR R package from CRAN.
 
