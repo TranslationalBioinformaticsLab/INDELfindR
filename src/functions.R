@@ -532,7 +532,8 @@ run_algo_on_one_read <- function(per_bam_region_indel_records){
       
       # Define indel records and add indel candidate record to per bam region table
       cigar_end_for_query <- each_operator-flanking_region_length-number_deletions_encountered
-      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1)
+      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
+      
       cigar_coords_for_query<- cigar_start:cigar_end_for_query
       
       reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
@@ -602,7 +603,7 @@ run_algo_on_one_read <- function(per_bam_region_indel_records){
       cigar_coords <- cigar_start:cigar_end
       
       cigar_end_for_query <- each_operator-num_to_remove-number_deletions_encountered
-      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1)
+      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
       cigar_coords_for_query<- cigar_start:cigar_end_for_query
       
       # Define indel records and add indel candidate record to per bam region table
@@ -730,7 +731,8 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
       
       # Define indel records and add indel candidate record to per bam region table
       cigar_end_for_query <- each_operator-flanking_region_length-number_deletions_encountered
-      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1)
+      #cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1)
+      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
       cigar_coords_for_query<- cigar_start:cigar_end_for_query
       
       reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
@@ -800,7 +802,8 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
       cigar_coords <- cigar_start:cigar_end
       
       cigar_end_for_query <- each_operator-num_to_remove-number_deletions_encountered
-      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1)
+     # cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1)
+      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
       cigar_coords_for_query<- cigar_start:cigar_end_for_query
       
       # Define indel records and add indel candidate record to per bam region table
@@ -928,7 +931,7 @@ run_algo_all_reads_each_bam_region <- function(row_num,per_bam_region_indel_reco
         read_pos <- mcols(gal)$pos[[read_num]]
         query_read_length <- length(query_sequence_string)
         read_strand <- mcols(gal)$strand[[read_num]]
-        read_name_record <- names(gal[read_num,])
+        read_name_record <- (names(gal)[[read_num]])
         
         if (verbose_arg==T){
           
@@ -975,4 +978,10 @@ run_algo_all_reads_each_bam_region <- function(row_num,per_bam_region_indel_reco
   
   return(per_bam_region_indel_records)
 } # end run algo all reads function
+
+# Function 12: Define C function to wait on child processes to get rid of zombie processes
+
+includes <- '#include <sys/wait.h>'
+code <- 'int wstat; while (waitpid(-1, &wstat, WNOHANG) > 0) {};'
+wait <- cfunction(body=code, includes=includes, convention='.C')
 

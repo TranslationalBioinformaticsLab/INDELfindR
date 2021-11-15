@@ -99,6 +99,7 @@ flanking_region_length <- 10
 target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
 #target_regions <- F
 #target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/debug_10_27.txt"
+number_cores <- 10
 
 #############################################################################################
 #
@@ -197,12 +198,15 @@ for (each_chromosome in chr_in_bam){
                                         "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
      
       # Find indels in each bam region using all available cores in parallel
+
       per_bam_region_indel_records <-
         do.call(
-          rbind, mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=detectCores()))
+          rbind, mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = T))
       
       # Add each chromosome results to the master results table
       master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
+      
+      wait()
       
      } # end each targeted region in bed file iteration
     
@@ -252,11 +256,12 @@ for (each_chromosome in chr_in_bam){
     
     per_bam_region_indel_records <-
       do.call(
-        rbind, mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=detectCores()))
+        rbind, mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores))
     # Add each chromosome results to the master results table
     
     master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
     
+    wait()
   } # end genome wide mode conditional
   
 } # end chr iteration
