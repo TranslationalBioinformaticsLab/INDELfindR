@@ -197,6 +197,11 @@ for (each_chromosome in chr_in_bam){
       rm(p_for_read_length_extract)
     }
     
+    # define coordinates of sliding windows
+    sliding_windows_per_bam_region=data.frame(chr=each_chromosome,
+                                              start=intervals[-(length(intervals))],
+                                              end=intervals[-1])
+    
     rm(p_for_chr_extract)
     
     # Initialize dataframe for collecting each bam region indel calls
