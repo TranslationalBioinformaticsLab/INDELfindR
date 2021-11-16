@@ -985,3 +985,19 @@ includes <- '#include <sys/wait.h>'
 code <- 'int wstat; while (waitpid(-1, &wstat, WNOHANG) > 0) {};'
 wait <- cfunction(body=code, includes=includes, convention='.C')
 
+# Function 13: Get primary chromosomes in bam file
+get_primary_chroms <- function(chr_in_bam){
+  
+if (startsWith(as.character(chr_in_bam[1]),"chr")){
+  primary_chromosome_list_chr <- c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9",'chr10',"chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX","chrY","chrM")
+} else if(startsWith(as.character(chr_in_bam[1]),"chr")){
+  primary_chromosome_list_Chr <- c("Chr1","Chr2","Chr3","Chr4","Chr5","Chr6","Chr7","Chr8","Chr9",'Chr10',"Chr11","Chr12","Chr13","Chr14","Chr15","Chr16","Chr17","Chr18","Chr19","Chr20","Chr21","Chr22","ChrX","ChrY","ChrM")
+} else {
+  primary_chromosome_list_nochr <- c("1","2","3","4","5","6","7","8","9",'10',"11","12","13","14","15","16","17","18","19","20","21","22","X","Y","M")
+}
+
+chr_in_bam <- intersect(chr_in_bam,primary_chromosome_list_chr)
+
+return(chr_in_bam)
+}
+
