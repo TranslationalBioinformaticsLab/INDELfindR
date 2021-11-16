@@ -96,8 +96,8 @@ verbose_arg=FALSE
 flanking_region_length <- 10
 #sliding_window_size <- 20
 #Optional parameters for testing:
-target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
-#target_regions <- F
+#target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
+target_regions <- F
 #target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/debug_10_27.txt"
 number_cores <- 10
 
@@ -219,10 +219,12 @@ for (each_chromosome in chr_in_bam){
     p_for_chr_extract <- ScanBamParam(which=GRanges(
       Rle(each_chromosome), 
       IRanges(1, size_chr)),
-      what=c("pos"))
+      what=c("pos","qwidth"))
     
-    max_pos<- max(na.omit(unlist(scanBam(bamPath, param=p_for_chr_extract)))) # add na omit for finding max read start when there are NA positions returned - find out why and decide if should remove them. 
-    min_pos<- min(na.omit(unlist(scanBam(bamPath, param=p_for_chr_extract)))) # add na omit for finding max read start when there are NA positions returned - find out why and decide if should remove them. 
+    # unlist(scanBam(bamPath, param=p_for_chr_extract))
+    
+    max_pos<- max(na.omit(unlist(scanBam(bamPath, param=p_for_chr_extract))[1])) # add na omit for finding max read start when there are NA positions returned - find out why and decide if should remove them. 
+    min_pos<- min(na.omit(unlist(scanBam(bamPath, param=p_for_chr_extract))[1])) # add na omit for finding max read start when there are NA positions returned - find out why and decide if should remove them. 
     
     # get total number reads 
     overlap.counts <- suppressMessages((bamCount(bamPath,GRanges(Rle(each_chromosome,1), IRanges(start=min_pos, end=max_pos)))))
@@ -234,6 +236,12 @@ for (each_chromosome in chr_in_bam){
     }
     
     intervals <- seq_with_uneven_last(from=min_pos,to=max_pos,by=target_bin_size)
+    
+    if (length(intervals)==1){
+      read_length <- unlist(scanBam(bamPath, param=p_for_chr_extract))[2]
+      intervals <- c(intervals[1],intervals[1]+read_length)
+    }
+    
     
     # define coordinates of sliding windows
     sliding_windows_per_bam_region=data.frame(chr=each_chromosome,
