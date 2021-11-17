@@ -470,8 +470,7 @@ write.vcf <- function(master_indel_call_table,phased,output_filename){
   af_col <- unlist(lapply(results_table$VAF, function(x) paste("AF=",x, sep="")))
   strand_bias_col <- unlist(lapply(results_table$strand_bias_pval, function(x) paste("SB=",x, sep="")))
   
-  INFO_col <- unlist(lapply(1, function(x) paste(af_col,strand_bias_col, sep=":")))
-  
+  INFO_col <- unlist(lapply(1, function(x) paste(af_col,strand_bias_col, sep=";")))
   
   results_table$reference_allele[results_table$reference_allele == ""] <- NA
   results_table$alt_allele[results_table$alt_allele == ""] <- NA
