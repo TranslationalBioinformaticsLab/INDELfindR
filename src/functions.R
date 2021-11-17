@@ -409,7 +409,7 @@ calculate_strand_bias_pval_vaf_and_dp_parallel_each_indel <- function(each_uniqu
   
   # set params for retrieving reads to extract non-supporting read strandedness counts
   strand_check_params=ScanBamParam(simpleCigar=FALSE, 
-                                   which=GRanges(seqnames=c(strand_check_chr), 
+                                   which=GRanges(seqnames=Rle(strand_check_chr), 
                                                  ranges=IRanges(strand_check_start_pos, strand_check_end_pos)), 
                                    mapqFilter=20,
                                    what=c("rname","strand"), # make mapqFilter an arg to parse

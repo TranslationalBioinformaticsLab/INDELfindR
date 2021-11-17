@@ -37,8 +37,8 @@ verbose_arg=FALSE
 flanking_region_length <- 10
 #sliding_window_size <- 20
 #Optional parameters for testing:
-#target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
-target_regions <- F
+target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
+#target_regions <- F
 #target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/debug_10_27.txt"
 number_cores <- 10
 primary_chromosomes <- T
