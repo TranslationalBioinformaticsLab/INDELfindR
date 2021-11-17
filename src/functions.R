@@ -318,61 +318,127 @@ getVaf <- function(num_supporting_reads,indel_read_depth){
 # Function 7: calculate strand bias, variant allele frequency, and read depth
 # retrieve coverage of each indel region
 # retrieve counts of strandendes variant and reference reads, assebmle contingency table, and run Fisher's Exact test to calculate strand bias pvalue
+# 
+# calculate_stand_bias_pval_vaf_and_dp <- function(collapsed_read_counts,master_indel_record_table_no_dup_reads){
+#   
+#   vaf_column <- c()
+#   dp_column <- c()
+#   strand_bias_pvalue <- c()
+#   
+#   # get read names and strand assignments for each unique 
+#   for (each_unique_indel_candidate in 1:nrow(collapsed_read_counts)){
+#     
+#     each_unique_indel_record <- collapsed_read_counts[each_unique_indel_candidate,]
+#     all_supporting_read_matches <- match_df(master_indel_record_table_no_dup_reads,each_unique_indel_record)
+#     indel_reads_vector <- all_supporting_read_matches[,c("read_name","strand")]
+#     
+#     variant_strand_counts <- table(indel_reads_vector$strand)
+#     
+#     strand_check_chr <- each_unique_indel_record$chr
+#     strand_check_start_pos <- as.numeric(each_unique_indel_record$start_pos)
+#     strand_check_end_pos<- as.numeric(each_unique_indel_record$end_pos)
+#     
+#     # set params for retrieving reads to extract non-supporting read strandedness counts
+#     strand_check_params=ScanBamParam(simpleCigar=FALSE, 
+#                                      which=GRanges(seqnames=c(strand_check_chr), 
+#                                                    ranges=IRanges(strand_check_start_pos, strand_check_end_pos)), 
+#                                      mapqFilter=20,
+#                                      what=c("rname","strand"), # make mapqFilter an arg to parse
+#                                      scanBamFlag(isSecondaryAlignment=FALSE,
+#                                                  isNotPassingQualityControls=FALSE,
+#                                                  isDuplicate=FALSE, #user would need bam with marked duplicates for this to be useful. Can test with BAM with marked duplicates. This could cause issues with amplicon seq
+#                                                  isUnmappedQuery=FALSE))
+#     
+#     gal_read_counts <- readGAlignments(bamPath, param=strand_check_params, use.names=TRUE)
+#     non_supporting_reads <- gal_read_counts[!(rownames(mcols(gal_read_counts)) %in% indel_reads_vector$read_name),]
+#     
+#     reference_strand_counts <- table(mcols(non_supporting_reads)$strand)
+#     
+#     # make contingency tables
+#     contingency_table <- rbind(reference_strand_counts[c("+","-")],variant_strand_counts[c("+","-")])
+#     
+#     contingency_table[is.na(contingency_table)] <- 0
+#     
+#     pvalue <- fisher.test(contingency_table)$p.value
+#     
+#     dp_value <- length(gal_read_counts)
+#     vaf_value <- (contingency_table[2,1]+contingency_table[2,2])/dp_value
+#     
+#     strand_bias_pvalue <- c(strand_bias_pvalue,pvalue)
+#     vaf_column <- c(vaf_column,vaf_value)
+#     dp_column <- c(dp_column,dp_value)
+#   }
+#   
+#   collapsed_read_counts_with_strand_correction_pvalue_for_writing <- collapsed_read_counts %>% add_column(VAF = vaf_column, DP = dp_column, strand_bias_pval = strand_bias_pvalue)
+#   
+#   return(collapsed_read_counts_with_strand_correction_pvalue_for_writing)
+# }
 
-calculate_stand_bias_pval_vaf_and_dp <- function(collapsed_read_counts,master_indel_record_table_no_dup_reads){
+# Function 7
+
+calculate_strand_bias_pval_vaf_and_dp_parallel <- function(collapsed_read_counts,master_indel_record_table_no_dup_reads,number_cores) {
   
-  vaf_column <- c()
-  dp_column <- c()
-  strand_bias_pvalue <- c()
+  cols_to_add <- c("VAF","DP","strand_bias_pval")  %>% purrr::map_dfc(setNames, object = list(as.character()))
   
-  # get read names and strand assignments for each unique 
-  for (each_unique_indel_candidate in 1:nrow(collapsed_read_counts)){
-    
-    each_unique_indel_record <- collapsed_read_counts[each_unique_indel_candidate,]
-    all_supporting_read_matches <- match_df(master_indel_record_table_no_dup_reads,each_unique_indel_record)
-    indel_reads_vector <- all_supporting_read_matches[,c("read_name","strand")]
-    
-    variant_strand_counts <- table(indel_reads_vector$strand)
-    
-    strand_check_chr <- each_unique_indel_record$chr
-    strand_check_start_pos <- as.numeric(each_unique_indel_record$start_pos)
-    strand_check_end_pos<- as.numeric(each_unique_indel_record$end_pos)
-    
-    # set params for retrieving reads to extract non-supporting read strandedness counts
-    strand_check_params=ScanBamParam(simpleCigar=FALSE, 
-                                     which=GRanges(seqnames=c(strand_check_chr), 
-                                                   ranges=IRanges(strand_check_start_pos, strand_check_end_pos)), 
-                                     mapqFilter=20,
-                                     what=c("rname","strand"), # make mapqFilter an arg to parse
-                                     scanBamFlag(isSecondaryAlignment=FALSE,
-                                                 isNotPassingQualityControls=FALSE,
-                                                 isDuplicate=FALSE, #user would need bam with marked duplicates for this to be useful. Can test with BAM with marked duplicates. This could cause issues with amplicon seq
-                                                 isUnmappedQuery=FALSE))
-    
-    gal_read_counts <- readGAlignments(bamPath, param=strand_check_params, use.names=TRUE)
-    non_supporting_reads <- gal_read_counts[!(rownames(mcols(gal_read_counts)) %in% indel_reads_vector$read_name),]
-    
-    reference_strand_counts <- table(mcols(non_supporting_reads)$strand)
-    
-    # make contingency tables
-    contingency_table <- rbind(reference_strand_counts[c("+","-")],variant_strand_counts[c("+","-")])
-    
-    contingency_table[is.na(contingency_table)] <- 0
-    
-    pvalue <- fisher.test(contingency_table)$p.value
-    
-    dp_value <- length(gal_read_counts)
-    vaf_value <- (contingency_table[2,1]+contingency_table[2,2])/dp_value
-    
-    strand_bias_pvalue <- c(strand_bias_pvalue,pvalue)
-    vaf_column <- c(vaf_column,vaf_value)
-    dp_column <- c(dp_column,dp_value)
-  }
+  cols_to_add <-
+    do.call(
+      rbind, mclapply(1:nrow(collapsed_read_counts),calculate_strand_bias_pval_vaf_and_dp_parallel_each_indel,collapsed_read_counts,master_indel_record_table_no_dup_reads,mc.cores=number_cores,mc.preschedule = F))
   
-  collapsed_read_counts_with_strand_correction_pvalue_for_writing <- collapsed_read_counts %>% add_column(VAF = vaf_column, DP = dp_column, strand_bias_pval = strand_bias_pvalue)
+  colnames(cols_to_add) <- c("VAF","DP","strand_bias_pval")
+  
+  collapsed_read_counts_with_strand_correction_pvalue_for_writing <- cbind(collapsed_read_counts,cols_to_add)
   
   return(collapsed_read_counts_with_strand_correction_pvalue_for_writing)
+  wait()
+  
 }
+
+# Function 7.5: Get strand bias pval, vaf, and dp for each indel (used by the parallelized function calculate_strand_bias_pval_vaf_and_dp_parallel())
+
+calculate_strand_bias_pval_vaf_and_dp_parallel_each_indel <- function(each_unique_indel_candidate,collapsed_read_counts,master_indel_record_table_no_dup_reads){
+  
+  each_unique_indel_record <- collapsed_read_counts[each_unique_indel_candidate,]
+  all_supporting_read_matches <- match_df(master_indel_record_table_no_dup_reads,each_unique_indel_record)
+  indel_reads_vector <- all_supporting_read_matches[,c("read_name","strand")]
+  
+  variant_strand_counts <- table(indel_reads_vector$strand)
+  
+  strand_check_chr <- each_unique_indel_record$chr
+  strand_check_start_pos <- as.numeric(each_unique_indel_record$start_pos)
+  strand_check_end_pos<- as.numeric(each_unique_indel_record$end_pos)
+  
+  # set params for retrieving reads to extract non-supporting read strandedness counts
+  strand_check_params=ScanBamParam(simpleCigar=FALSE, 
+                                   which=GRanges(seqnames=c(strand_check_chr), 
+                                                 ranges=IRanges(strand_check_start_pos, strand_check_end_pos)), 
+                                   mapqFilter=20,
+                                   what=c("rname","strand"), # make mapqFilter an arg to parse
+                                   scanBamFlag(isSecondaryAlignment=FALSE,
+                                               isNotPassingQualityControls=FALSE,
+                                               isDuplicate=FALSE, #user would need bam with marked duplicates for this to be useful. Can test with BAM with marked duplicates. This could cause issues with amplicon seq
+                                               isUnmappedQuery=FALSE))
+  
+  gal_read_counts <- readGAlignments(bamPath, param=strand_check_params, use.names=TRUE)
+  non_supporting_reads <- gal_read_counts[!(rownames(mcols(gal_read_counts)) %in% indel_reads_vector$read_name),]
+  
+  reference_strand_counts <- table(mcols(non_supporting_reads)$strand)
+  
+  # make contingency tables
+  contingency_table <- rbind(reference_strand_counts[c("+","-")],variant_strand_counts[c("+","-")])
+  
+  contingency_table[is.na(contingency_table)] <- 0
+  
+  pvalue <- fisher.test(contingency_table)$p.value
+  
+  dp_value <- length(gal_read_counts)
+  vaf_value <- (contingency_table[2,1]+contingency_table[2,2])/dp_value
+  
+  row_to_add_to_cols_to_add <- c(vaf_value,dp_value,pvalue)
+  
+  return(row_to_add_to_cols_to_add)
+}
+
+
 
 # Function 8: Write indel calls to VCF file output
 

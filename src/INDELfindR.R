@@ -239,7 +239,8 @@ collapsed_read_counts_with_strand <- rename(dplyr::count(master_indel_record_tab
 
 collapsed_read_counts <- rename(count(master_indel_record_table_no_dup_reads, chr,start_pos,end_pos,refined_cigar_string,collapsed_cigar_string,reference_allele,alt_allele), FREQ = n)
 
-collapsed_read_counts_with_strand_correction_pvalue_for_writing <- calculate_stand_bias_pval_vaf_and_dp(collapsed_read_counts,master_indel_record_table_no_dup_reads)
+#collapsed_read_counts_with_strand_correction_pvalue_for_writing <- calculate_stand_bias_pval_vaf_and_dp(collapsed_read_counts,master_indel_record_table_no_dup_reads)
+collapsed_read_counts_with_strand_correction_pvalue_for_writing <- calculate_strand_bias_pval_vaf_and_dp_parallel(collapsed_read_counts,master_indel_record_table_no_dup_reads,number_cores)
 
 # write out VCF file
 write.vcf(collapsed_read_counts_with_strand_correction_pvalue_for_writing,phased=FALSE,"/Users/George/indel_detection_tool_project/test_vcf_file_output/test_vcf_output.vcf")
