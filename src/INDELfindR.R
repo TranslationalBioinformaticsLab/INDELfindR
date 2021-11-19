@@ -42,7 +42,7 @@ target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/E
 #target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/debug_10_27.txt"
 number_cores <- 10
 primary_chromosomes <- T
-
+min_indel_length <- 10
 
 #############################################################################################
 #
@@ -61,9 +61,9 @@ source("/Users/George/indel_detection_tool_project/indelfindr/src/functions.R")
 options(scipen=20)
 
 # get all hg38 chromosome lengths
-chg38_chromosome_lengths <- getChromInfoFromUCSC("hg38") # all hg38 chr lengths  (595 chrs in hg38 annotation including alts)
+chg38_chromosome_lengths <- getChromInfoFromUCSC("hg38") # all hg38 chr/altcontig lengths  (595 chromosomes/contigs in hg38 annotation)
 
-# load hg38 reference genome sequence data (688MB) - add option to load this optionally if user doesn't opt to use BBtools Reformat tool, or other aligner, for extended cigar string
+# load hg38 reference genome sequence data (688MB) - add option to load this optionally, if user opts to use BBtools Reformat tool, or other aligner, for extended cigar string, it will cut down on runtime and not require loading reference genome sequence into memory
 hg38_genome <- BSgenome.Hsapiens.UCSC.hg38
 
 #############################################################################################
@@ -96,7 +96,6 @@ if (target_regions != FALSE) {
   # get chr names in bam file to search
   p = ScanBamParam(what=c("rname", "pos"))
   
-  #head(as.data.frame(scanBam(bamPath,param=p)))
   chr_in_bam <- na.omit(unique(as.data.frame(scanBam(bamPath, param=p))$rname))
 }
 
@@ -169,8 +168,6 @@ for (each_chromosome in chr_in_bam){
       IRanges(1, size_chr)),
       what=c("pos"))
     
-    # unlist(scanBam(bamPath, param=p_for_chr_extract))
-    
     max_pos<- max(na.omit(unlist(scanBam(bamPath, param=p_for_chr_extract)))) # add na omit for finding max read start when there are NA positions returned - find out why and decide if should remove them. 
     min_pos<- min(na.omit(unlist(scanBam(bamPath, param=p_for_chr_extract)))) # add na omit for finding max read start when there are NA positions returned - find out why and decide if should remove them. 
     
@@ -229,6 +226,8 @@ for (each_chromosome in chr_in_bam){
 } # end chr iteration
 
 # Process results
+
+#write a wrapper function around these processing steps to handle cases with no indels found, generate warnings etc.
 
 # remove reads which cover multiple bam regions, were extracted, and searched more than once
 dup_indices <- duplicated(master_indel_record_table[,c("read_name","chr","start_pos","end_pos","alt_allele")])
