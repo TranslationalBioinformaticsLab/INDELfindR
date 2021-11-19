@@ -436,14 +436,14 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
       consecutive_indel_operator_flag <- T
       #print("TWO")
       
-      # if the first variant operator is encountered before the 10th bp in the read
+      # Catch indels which begin at very stard of read and dont have 10bp flanking prior. (Ff the first variant operator is encountered before the 10th bp in the read)
     } else if (operator %in% c("I","D") && each_operator < flanking_region_length && consecutive_indel_operator_flag == F) {
       match_operator_counter <- 0
       indel_candidate_container <- c(indel_candidate_container,operator)
       consecutive_indel_operator_flag <- T
       #print("TWO.5")
       
-      # if there is a neighboring variant operator
+      # If there is an immediately adjacent variant operator
     } else if (operator %in% c("I","D") && (match_operator_counter < flanking_region_length) && consecutive_indel_operator_flag == T){
       
       indel_candidate_container <- c(indel_candidate_container,operator)
@@ -460,7 +460,7 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
       #print("FOUR")
     } 
     
-    # Check for complete indel match: if there are more than 10 match operators after a candidate indel is found, or if the end of the read is found while a consecutive indel string is being built
+    # Check for complete indel match: if there are more than 10 match operators after a candidate indel is found. See below for exception for indel reaching end of read.
     if (match_operator_counter >= flanking_region_length && consecutive_indel_operator_flag == T){
       
       # reset the consecutive_indel_operator_flag to false, since string of closely spaced operators is broken
@@ -478,54 +478,51 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
       # begin conditional min_indel_length conditional      
       if (length(indel_candidate_container) >= min_indel_length){
         
-      #print(indel_candidate_container)
-      
-      number_deletions_per_candidate <- sum(indel_candidate_container == "D")
-      
-      number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
-      
-      cigar_end <- each_operator - flanking_region_length
-      cigar_start <- cigar_end-(length(indel_candidate_container)-1)
-      cigar_coords <- cigar_start:cigar_end
-      
-      # Define indel records and add indel candidate record to per bam region table
-      cigar_end_for_query <- each_operator-flanking_region_length-number_deletions_encountered
-      #cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1)
-      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
-      cigar_coords_for_query<- cigar_start:cigar_end_for_query
-      
-      reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
-      reference_end_record <- reference_start_record+length(indel_candidate_container)-1
-      chr_record <- each_chromosome
-      
-      reference_sequence_for_translation <- reference_sequence[cigar_start:cigar_end]
-      query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
-      indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
-      reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
-      alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
-      exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] #can convert this to regular condensed format cigar string
-      cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
-      
-      candidate_indel_record <-tibble(chr=chr_record,
-                                      start_pos=reference_start_record,
-                                      end_pos=reference_end_record,
-                                      refined_cigar_string=toString(exploded_cigar_string_record),
-                                      collapsed_cigar_string=cigar_string_record,
-                                      reference_allele=reference_allele_record,
-                                      alt_allele=alternate_allele_record,
-                                      strand = read_strand,
-                                      read_name = read_name_record)
-      
-      #add indel record to per region table
-      per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
-      
-      # clear the indel_candidate_container
-      
-      indel_candidate_container=c()
-      
+        number_deletions_per_candidate <- sum(indel_candidate_container == "D")
+        
+        number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
+        
+        cigar_end <- each_operator - flanking_region_length
+        cigar_start <- cigar_end-(length(indel_candidate_container)-1)
+        cigar_coords <- cigar_start:cigar_end
+        
+        # Define indel records and add indel candidate record to per bam region table
+        cigar_end_for_query <- each_operator-flanking_region_length-number_deletions_encountered
+        cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
+        cigar_coords_for_query<- cigar_start:cigar_end_for_query
+        
+        reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
+        reference_end_record <- reference_start_record+length(indel_candidate_container)-1
+        chr_record <- each_chromosome
+        
+        reference_sequence_for_translation <- reference_sequence[cigar_start:cigar_end]
+        query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
+        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
+        reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
+        alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
+        exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] #can convert this to regular condensed format cigar string
+        cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
+        
+        candidate_indel_record <-tibble(chr=chr_record,
+                                        start_pos=reference_start_record,
+                                        end_pos=reference_end_record,
+                                        refined_cigar_string=toString(exploded_cigar_string_record),
+                                        collapsed_cigar_string=cigar_string_record,
+                                        reference_allele=reference_allele_record,
+                                        alt_allele=alternate_allele_record,
+                                        strand = read_strand,
+                                        read_name = read_name_record)
+        
+        #add indel record to per region table
+        per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+        
+        # clear the indel_candidate_container
+        
+        indel_candidate_container=c()
+        
       } else {
         # don't save indel and keep moving on nothing
-        indel_candidate_container=c()
+          indel_candidate_container=c()
       }       # end conditional min_indel_length conditional
 
       
@@ -546,7 +543,6 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
       # DEBUG HERE
       if (candidate_rle[2]$values[length(candidate_rle[2]$values)]=="="){
         
-        
         num_to_remove <- candidate_rle[1]$lengths[length(candidate_rle[1]$lengths)]
         
         last_remove <- length(indel_candidate_container)-(num_to_remove-1)
@@ -560,54 +556,53 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
       # begin conditional min_indel_length conditional      
       if (length(indel_candidate_container) >= min_indel_length){
 
-      #print(indel_candidate_container)
-      
-      number_deletions_per_candidate <- sum(indel_candidate_container == "D")
-      
-      number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
-      
-      cigar_end <- each_operator-num_to_remove
-      cigar_start <- cigar_end-(length(indel_candidate_container)-1)
-      cigar_coords <- cigar_start:cigar_end
-      
-      cigar_end_for_query <- each_operator-num_to_remove-number_deletions_encountered
-     # cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1)
-      cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
-      cigar_coords_for_query<- cigar_start:cigar_end_for_query
-      
-      # Define indel records and add indel candidate record to per bam region table
-      reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
-      reference_end_record <- reference_start_record+length(indel_candidate_container)-1
-      
-      chr_record <- each_chromosome
-      
-      reference_sequence_for_translation <- reference_sequence[cigar_start:cigar_end]
-      query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
-      indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
-      reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
-      alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
-      exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] # can convert this to regular condensed format cigar string
-      cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
-      
-      candidate_indel_record <-tibble(chr=chr_record,
-                                      start_pos=reference_start_record,
-                                      end_pos=reference_end_record,
-                                      refined_cigar_string=toString(exploded_cigar_string_record),
-                                      collapsed_cigar_string=cigar_string_record,
-                                      reference_allele=reference_allele_record,
-                                      alt_allele=alternate_allele_record,
-                                      strand = read_strand,
-                                      read_name = read_name_record)
-      
-      #add indel record to per region table
-      per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
-      
-      # clear the indel_candidate_container
-      indel_candidate_container=c()
+        #print(indel_candidate_container)
+        
+        number_deletions_per_candidate <- sum(indel_candidate_container == "D")
+        
+        number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
+        
+        cigar_end <- each_operator-num_to_remove
+        cigar_start <- cigar_end-(length(indel_candidate_container)-1)
+        cigar_coords <- cigar_start:cigar_end
+        
+        cigar_end_for_query <- each_operator-num_to_remove-number_deletions_encountered
+        cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
+        cigar_coords_for_query<- cigar_start:cigar_end_for_query
+        
+        # Define indel records and add indel candidate record to per bam region table
+        reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
+        reference_end_record <- reference_start_record+length(indel_candidate_container)-1
+        
+        chr_record <- each_chromosome
+        
+        reference_sequence_for_translation <- reference_sequence[cigar_start:cigar_end]
+        query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
+        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
+        reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
+        alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
+        exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] # can convert this to regular condensed format cigar string
+        cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
+        
+        candidate_indel_record <-tibble(chr=chr_record,
+                                        start_pos=reference_start_record,
+                                        end_pos=reference_end_record,
+                                        refined_cigar_string=toString(exploded_cigar_string_record),
+                                        collapsed_cigar_string=cigar_string_record,
+                                        reference_allele=reference_allele_record,
+                                        alt_allele=alternate_allele_record,
+                                        strand = read_strand,
+                                        read_name = read_name_record)
+        
+        #add indel record to per region table
+        per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+        
+        # clear the indel_candidate_container
+        indel_candidate_container=c()
       
       } else {
         # end conditional min_indel_length conditional      
-        indel_candidate_container=c()
+         indel_candidate_container=c()
         
       }
       
