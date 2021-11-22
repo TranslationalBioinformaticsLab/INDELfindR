@@ -226,7 +226,6 @@ translate_cigar_index_to_ref_and_query_v2 <- function(cigar_coords,cigar_coords_
   
 }
 
-
 # Function 4: Convert exploded CIGAR string to normal shortened format CIGAR string
 
 unexplode_cigar_string <- function(exploded_cigar_string){
@@ -742,12 +741,32 @@ run_algo_all_reads_each_bam_region <- function(row_num,per_bam_region_indel_reco
       
     } # end per read iteration
     
+    
+    
     rm(gal)
     
   } # end coverage > 2 conditional
   
   return(per_bam_region_indel_records)
 } # end run algo all reads function
+
+# Function 11.1: Wrap run_algo_all_reads_each_bam_region in a tryCatch function for writing errors to log.
+
+safe_run_algo_all_reads_each_bam_region <- function(row_num,per_bam_region_indel_records,log.path){
+  tryCatch({
+    
+    #Function here
+    bam_region_results <- run_algo_all_reads_each_bam_region(row_num,per_bam_region_indel_records)
+    
+  }, error = function(err.msg){
+    # Add error message to the error log file
+    write(paste0(toString(err.msg),"encountered processing read number:",read_num," in bam region number",row_num," at ",bam_region_chr,":",read_pos," - read name:",read_name_record), log.path, append=TRUE)
+  })
+  
+  return(bam_region_results)
+  
+}
+
 
 # Function 12: Define C function to wait on child processes to get rid of zombie processes
 

@@ -42,7 +42,7 @@ target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/E
 #target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/debug_10_27.txt"
 number_cores <- 10
 primary_chromosomes <- T
-min_indel_length <- 10
+min_indel_length <- 3
 
 #############################################################################################
 #
@@ -148,7 +148,7 @@ for (each_chromosome in chr_in_bam){
 
       per_bam_region_indel_records <-
         do.call(
-          rbind, mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = T))
+          rbind, mclapply(1:nrow(sliding_windows_per_bam_region),safe_run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F))
       
       # Add each chromosome results to the master results table
       master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
@@ -215,7 +215,7 @@ for (each_chromosome in chr_in_bam){
     
     per_bam_region_indel_records <-
       do.call(
-        rbind, mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores))
+        rbind, mclapply(1:nrow(sliding_windows_per_bam_region),safe_run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F))
     # Add each chromosome results to the master results table
     
     master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
