@@ -271,7 +271,7 @@ calculate_strand_bias_pval_vaf_and_dp_parallel <- function(collapsed_read_counts
   
   cols_to_add <-
     do.call(
-      rbind, mclapply(1:nrow(collapsed_read_counts),calculate_strand_bias_pval_vaf_and_dp_parallel_each_indel,collapsed_read_counts,master_indel_record_table_no_dup_reads,mc.cores=number_cores,mc.preschedule = F))
+      rbind, bettermc::mclapply(1:nrow(collapsed_read_counts),calculate_strand_bias_pval_vaf_and_dp_parallel_each_indel,collapsed_read_counts,master_indel_record_table_no_dup_reads,mc.cores=number_cores,mc.preschedule = F))
   
   colnames(cols_to_add) <- c("VAF","DP","strand_bias_pval")
   
@@ -403,7 +403,7 @@ seq_with_uneven_last <- function (from, to, by)
 # Function 10.1: Run algorithm on each read and collect indel calls to add to master table
 
 run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refined_cigar_string,flanking_region_length,query_sequence_string,reference_sequence,read_pos,query_read_length,read_strand,read_name_record,number_leading_softclips,each_chromosome,min_indel_length){
-  
+
   # define algo counters
   match_operator_counter=0
   indel_candidate_container=c()
@@ -474,12 +474,12 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
       
       indel_candidate_container <- indel_candidate_container[-(first_remove:last_remove)]
       
+      # calculate number_deletions_per_candidate and add to number_delections_encountered
+      number_deletions_per_candidate <- sum(indel_candidate_container == "D")
+      number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
+      
       # begin conditional min_indel_length conditional      
       if (length(indel_candidate_container) >= min_indel_length){
-        
-        number_deletions_per_candidate <- sum(indel_candidate_container == "D")
-        
-        number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
         
         cigar_end <- each_operator - flanking_region_length
         cigar_start <- cigar_end-(length(indel_candidate_container)-1)
@@ -516,14 +516,13 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
         per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
         
         # clear the indel_candidate_container
-        
         indel_candidate_container=c()
         
       } else {
         # don't save indel and keep moving on nothing
-          indel_candidate_container=c()
+        indel_candidate_container=c()
       }       # end conditional min_indel_length conditional
-
+      
       
       # add exception if the indel candidate runs all the way into the end of the read
     } else if (each_operator == length(refined_cigar_string) && consecutive_indel_operator_flag == T){
@@ -535,31 +534,41 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
       
       #print(indel_candidate_container)
       
-      # remove flanking = or X operators
+      # remove flanking "=" or "X" operators
       
       candidate_rle <- rle(indel_candidate_container)
       
-      # DEBUG HERE
-      if (candidate_rle[2]$values[length(candidate_rle[2]$values)]=="="){
+      pattern <- c("D","I")
+      
+      # if candidate ends in "i" or "D" remove nothing
+      if (candidate_rle[2]$values[length(candidate_rle[2]$values)] %in% pattern){
         
-        num_to_remove <- candidate_rle[1]$lengths[length(candidate_rle[1]$lengths)]
+        num_to_remove <- 0
+        
+      } else {
+        
+        # get max index of I or D in RLE values
+        operator_to_cut_to <- max(which(candidate_rle[2]$values=="I" | candidate_rle[2]$values== "D"))
+        # define which rle values to keep (all those between D or I)
+        operators_before_operator_to_cut_to <- 1:operator_to_cut_to
+        # count number X or = operators to remove
+        num_to_remove <- sum(candidate_rle$lengths[-c(1:operator_to_cut_to)])
         
         last_remove <- length(indel_candidate_container)-(num_to_remove-1)
         first_remove <- length(indel_candidate_container)
         
+        # trim indel candidate to remove non indel operators
         indel_candidate_container <- indel_candidate_container[-(first_remove:last_remove)]
-      } else {
-        num_to_remove <- 0
+        
       }
+      
+      number_deletions_per_candidate <- sum(indel_candidate_container == "D")
+      number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
       
       # begin conditional min_indel_length conditional      
       if (length(indel_candidate_container) >= min_indel_length){
-
+        
         #print(indel_candidate_container)
-        
-        number_deletions_per_candidate <- sum(indel_candidate_container == "D")
-        
-        number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
         
         cigar_end <- each_operator-num_to_remove
         cigar_start <- cigar_end-(length(indel_candidate_container)-1)
@@ -598,21 +607,230 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
         
         # clear the indel_candidate_container
         indel_candidate_container=c()
-      
+        
       } else {
         # end conditional min_indel_length conditional      
-         indel_candidate_container=c()
+        indel_candidate_container=c()
         
       }
-      
+ 
     }
-    
+
   } # end each operator iteration
-  
-  
+
   return(per_bam_region_indel_records)
-  
-}
+
+} 
+
+#   # define algo counters
+#   match_operator_counter=0
+#   indel_candidate_container=c()
+#   consecutive_indel_operator_flag=F
+#   number_deletions_encountered <- 0
+#   
+#   # iterate through each cigar operator per read
+#   for (each_operator in 1:length(refined_cigar_string)){
+#     
+#     #print(indel_candidate_container)
+#     
+#     operator <- refined_cigar_string[each_operator]
+#     
+#     # add exception for soft clipping, consider S as match operators 
+#     if (operator == "S"){
+#       operator <- "="
+#     }
+#     
+#     # if the operator matches the reference and there is not a current indel candidate
+#     if (operator == "=" && consecutive_indel_operator_flag == F){
+#       
+#       match_operator_counter = match_operator_counter + 1
+#       #print("ONE")
+#       
+#       # if the first variant operator is encountered: 
+#     } else if (operator %in% c("I","D") && match_operator_counter >= flanking_region_length && consecutive_indel_operator_flag == F){
+#       match_operator_counter <- 0
+#       indel_candidate_container <- c(indel_candidate_container,operator)
+#       consecutive_indel_operator_flag <- T
+#       #print("TWO")
+#       
+#       # Catch indels which begin at very stard of read and dont have 10bp flanking prior. (Ff the first variant operator is encountered before the 10th bp in the read)
+#     } else if (operator %in% c("I","D") && each_operator < flanking_region_length && consecutive_indel_operator_flag == F) {
+#       match_operator_counter <- 0
+#       indel_candidate_container <- c(indel_candidate_container,operator)
+#       consecutive_indel_operator_flag <- T
+#       #print("TWO.5")
+#       
+#       # If there is an immediately adjacent variant operator
+#     } else if (operator %in% c("I","D") && (match_operator_counter < flanking_region_length) && consecutive_indel_operator_flag == T){
+#       
+#       indel_candidate_container <- c(indel_candidate_container,operator)
+#       
+#       match_operator_counter <- 0
+#       
+#       #print("THREE")
+#       
+#       # count match operators after encountering variant operators
+#     } else if ((operator == "=" && consecutive_indel_operator_flag == T) | (operator == "X" && consecutive_indel_operator_flag == T)){
+#       indel_candidate_container <- c(indel_candidate_container,operator)
+#       match_operator_counter = match_operator_counter + 1
+#       
+#       #print("FOUR")
+#     } 
+#     
+#     # Check for complete indel match: if there are more than 10 match operators after a candidate indel is found. See below for exception for indel reaching end of read.
+#     if (match_operator_counter >= flanking_region_length && consecutive_indel_operator_flag == T){
+#       
+#       # reset the consecutive_indel_operator_flag to false, since string of closely spaced operators is broken
+#       consecutive_indel_operator_flag = F
+#       
+#       #print("FIVE")
+#       
+#       #print(indel_candidate_container)
+#       
+#       first_remove <- length(indel_candidate_container)-(flanking_region_length-1)
+#       last_remove <- length(indel_candidate_container)
+#       
+#       indel_candidate_container <- indel_candidate_container[-(first_remove:last_remove)]
+#       
+#       # begin conditional min_indel_length conditional      
+#       if (length(indel_candidate_container) >= min_indel_length){
+#         
+#         number_deletions_per_candidate <- sum(indel_candidate_container == "D")
+#         
+#         number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
+#         
+#         cigar_end <- each_operator - flanking_region_length
+#         cigar_start <- cigar_end-(length(indel_candidate_container)-1)
+#         cigar_coords <- cigar_start:cigar_end
+#         
+#         # Define indel records and add indel candidate record to per bam region table
+#         cigar_end_for_query <- each_operator-flanking_region_length-number_deletions_encountered
+#         cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
+#         cigar_coords_for_query<- cigar_start:cigar_end_for_query
+#         
+#         reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
+#         reference_end_record <- reference_start_record+length(indel_candidate_container)-1
+#         chr_record <- each_chromosome
+#         
+#         reference_sequence_for_translation <- reference_sequence[cigar_start:cigar_end]
+#         query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
+#         indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
+#         reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
+#         alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
+#         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] #can convert this to regular condensed format cigar string
+#         cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
+#         
+#         candidate_indel_record <-tibble(chr=chr_record,
+#                                         start_pos=reference_start_record,
+#                                         end_pos=reference_end_record,
+#                                         refined_cigar_string=toString(exploded_cigar_string_record),
+#                                         collapsed_cigar_string=cigar_string_record,
+#                                         reference_allele=reference_allele_record,
+#                                         alt_allele=alternate_allele_record,
+#                                         strand = read_strand,
+#                                         read_name = read_name_record)
+#         
+#         #add indel record to per region table
+#         per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+#         
+#         # clear the indel_candidate_container
+#         
+#         indel_candidate_container=c()
+#         
+#       } else {
+#         # don't save indel and keep moving on nothing
+#           indel_candidate_container=c()
+#       }       # end conditional min_indel_length conditional
+# 
+#       
+#       # add exception if the indel candidate runs all the way into the end of the read
+#     } else if (each_operator == length(refined_cigar_string) && consecutive_indel_operator_flag == T){
+#       
+#       # reset the consecutive_indel_operator_flag to false, since string of closely spaced operators is broken
+#       consecutive_indel_operator_flag = F
+#       
+#       #print("SIX")
+#       
+#       #print(indel_candidate_container)
+#       
+#       # remove flanking = or X operators
+#       
+#       candidate_rle <- rle(indel_candidate_container)
+#       
+#       # DEBUG HERE
+#       if (candidate_rle[2]$values[length(candidate_rle[2]$values)]=="="){
+#         
+#         num_to_remove <- candidate_rle[1]$lengths[length(candidate_rle[1]$lengths)]
+#         
+#         last_remove <- length(indel_candidate_container)-(num_to_remove-1)
+#         first_remove <- length(indel_candidate_container)
+#         
+#         indel_candidate_container <- indel_candidate_container[-(first_remove:last_remove)]
+#       } else {
+#         num_to_remove <- 0
+#       }
+#       
+#       # begin conditional min_indel_length conditional      
+#       if (length(indel_candidate_container) >= min_indel_length){
+# 
+#         #print(indel_candidate_container)
+#         
+#         number_deletions_per_candidate <- sum(indel_candidate_container == "D")
+#         
+#         number_deletions_encountered <- number_deletions_encountered + number_deletions_per_candidate
+#         
+#         cigar_end <- each_operator-num_to_remove
+#         cigar_start <- cigar_end-(length(indel_candidate_container)-1)
+#         cigar_coords <- cigar_start:cigar_end
+#         
+#         cigar_end_for_query <- each_operator-num_to_remove-number_deletions_encountered
+#         cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_encountered)
+#         cigar_coords_for_query<- cigar_start:cigar_end_for_query
+#         
+#         # Define indel records and add indel candidate record to per bam region table
+#         reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
+#         reference_end_record <- reference_start_record+length(indel_candidate_container)-1
+#         
+#         chr_record <- each_chromosome
+#         
+#         reference_sequence_for_translation <- reference_sequence[cigar_start:cigar_end]
+#         query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
+#         indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
+#         reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
+#         alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
+#         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] # can convert this to regular condensed format cigar string
+#         cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
+#         
+#         candidate_indel_record <-tibble(chr=chr_record,
+#                                         start_pos=reference_start_record,
+#                                         end_pos=reference_end_record,
+#                                         refined_cigar_string=toString(exploded_cigar_string_record),
+#                                         collapsed_cigar_string=cigar_string_record,
+#                                         reference_allele=reference_allele_record,
+#                                         alt_allele=alternate_allele_record,
+#                                         strand = read_strand,
+#                                         read_name = read_name_record)
+#         
+#         #add indel record to per region table
+#         per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+#         
+#         # clear the indel_candidate_container
+#         indel_candidate_container=c()
+#       
+#       } else {
+#         # end conditional min_indel_length conditional      
+#          indel_candidate_container=c()
+#         
+#       }
+#       
+#     }
+#     
+#   } # end each operator iteration
+#   
+#   
+#   return(per_bam_region_indel_records)
+#   
+# }
 
 
 # Function 11 write intermediate chrom calls table:

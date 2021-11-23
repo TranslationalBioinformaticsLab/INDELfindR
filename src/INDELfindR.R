@@ -20,6 +20,7 @@ suppressMessages(library(tictoc))
 suppressMessages(library(bamsignals)) 
 suppressMessages(library(parallel)) 
 suppressMessages(library(inline))
+suppressMessages(library(bettermc))
 
 #############################################################################################
 #
@@ -148,7 +149,7 @@ for (each_chromosome in chr_in_bam){
 
       per_bam_region_indel_records <-
         do.call(
-          rbind, mclapply(1:nrow(sliding_windows_per_bam_region),safe_run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F))
+          rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("signal"),mc.warnings=c("signal")))
       
       # Add each chromosome results to the master results table
       master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
@@ -215,7 +216,7 @@ for (each_chromosome in chr_in_bam){
     
     per_bam_region_indel_records <-
       do.call(
-        rbind, mclapply(1:nrow(sliding_windows_per_bam_region),safe_run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F))
+        rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("signal"),mc.warnings=c("signal")))
     # Add each chromosome results to the master results table
     
     master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
