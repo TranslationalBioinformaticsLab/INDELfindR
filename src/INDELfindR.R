@@ -146,10 +146,19 @@ for (each_chromosome in chr_in_bam){
                                         "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
      
       # Find indels in each bam region using all available cores in parallel
-
-      per_bam_region_indel_records <-
-        do.call(
-          rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+      # Find indels in each bam region using all available cores in parallel
+      if (min_indel_length >= 2){
+        
+        per_bam_region_indel_records <-
+          do.call(
+            rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+  
+      } else {
+        print("This is working")
+        per_bam_region_indel_records <-
+          do.call(
+            rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+      }
       
       # Add each chromosome results to the master results table
       master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
@@ -213,12 +222,19 @@ for (each_chromosome in chr_in_bam){
                                       "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
     
     # Find indels in each bam region using all available cores in parallel
-    
+    if (min_indel_length >= 2){
+      
     per_bam_region_indel_records <-
       do.call(
         rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
     # Add each chromosome results to the master results table
     
+    } else {
+      print("This is working")
+      per_bam_region_indel_records <-
+        do.call(
+          rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+    }
     master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
     
     wait()
