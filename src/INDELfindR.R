@@ -18,7 +18,7 @@ logo <- r"{
  \_)-' '-(_/ (_")  (_/(__)_) (__) (__)(_")("_)(__)(_/ \_)-' '-(_/ (_")  (_/(__)_) (__)  (__)
                                                              
 }"
-                                                                    
+                                                              
 cat("\n \n \n#############################################################################################\n")
 
 cat(logo)
@@ -87,8 +87,6 @@ parser$add_argument("-z", "--zero_based", action="store_false",
 parser$add_argument("-o", "--output_dir", default=getwd(),
                     help="Define the output directory path")
 
-
-
 args <- parser$parse_args()
 
 bamPath <- args$alignment_file
@@ -107,19 +105,19 @@ zero_based <- args$zero_based
 output_dir <- args$output_dir
 # To run during dev:
 
-# bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
-# bam_region_bin_size <- 100000 #dev-on
-# verbose_arg=FALSE
-# flanking_region_length <- 10
-# target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
-# number_cores <- 10 # Make default 2 
-# primary_chromosomes <- T
-# min_indel_length <- 3
-# mapq_threshold <- 20
-# min_supporting_reads <- 1
-# min_vaf <- 0.01
-# min_read_depth <- 20
-# zero_to_one_based <- F
+bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
+bam_region_bin_size <- 100000 #dev-on
+verbose_arg=FALSE
+flanking_region_length <- 10
+target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
+number_cores <- 10 # Make default 2
+primary_chromosomes <- T
+min_indel_length <- 3
+mapq_threshold <- 20
+min_supporting_reads <- 1
+min_vaf <- 0.01
+min_read_depth <- 20
+zero_to_one_based <- F
 
 # #bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/bam_for_testing_1656854-1657354.bam"
 # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
@@ -261,22 +259,29 @@ for (each_chromosome in chr_in_bam){
                                         "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
      
       # Find indels in each bam region using all available cores in parallel
-      # Find indels in each bam region using all available cores in parallel
-      if (min_indel_length >= 2){
-        
-        per_bam_region_indel_records <-
-          do.call(
-            rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
-  
-      } else {
-        print("This is working")
+
         per_bam_region_indel_records <-
           do.call(
             rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
-      }
-      
+
       # Add each chromosome results to the master results table
       master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
+      
+      # Find indels in each bam region using all available cores in parallel
+      # if (min_indel_length >= 2){
+      #   
+      #   per_bam_region_indel_records <-
+      #     do.call(
+      #       rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+      #   
+      # } else {
+      #   print("This is working")
+      #   per_bam_region_indel_records <-
+      #     do.call(
+      #       rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+      # }
+      ## Add each chromosome results to the master results table
+      #master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
       
       wait()
       
@@ -337,20 +342,28 @@ for (each_chromosome in chr_in_bam){
                                       "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
     
     # Find indels in each bam region using all available cores in parallel
-    if (min_indel_length >= 2){
-      
-    per_bam_region_indel_records <-
-      do.call(
-        rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
-    # Add each chromosome results to the master results table
-    
-    } else {
-      print("This is working")
+
       per_bam_region_indel_records <-
         do.call(
           rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
-    }
+
     master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
+
+    # # Find indels in each bam region using all available cores in parallel
+    # if (min_indel_length >= 2){
+    #   
+    #   per_bam_region_indel_records <-
+    #     do.call(
+    #       rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+    #   # Add each chromosome results to the master results table
+    #   
+    # } else {
+    #   print("This is working")
+    #   per_bam_region_indel_records <-
+    #     do.call(
+    #       rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+    # }
+    #master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
     
     wait()
   } # end genome wide mode conditional
@@ -373,12 +386,12 @@ collapsed_read_counts <- rename(count(master_indel_record_table_no_dup_reads, ch
 # collapsed_read_counts_with_strand_correction_pvalue_for_writing <- calculate_stand_bias_pval_vaf_and_dp(collapsed_read_counts,master_indel_record_table_no_dup_reads)
 collapsed_read_counts_with_strand_correction_pvalue_for_writing <- calculate_strand_bias_pval_vaf_and_dp_parallel(collapsed_read_counts,master_indel_record_table_no_dup_reads,number_cores)
 
-print(nrow(collapsed_read_counts_with_strand_correction_pvalue_for_writing))
-
 # filter one read calls
 collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered <- collapsed_read_counts_with_strand_correction_pvalue_for_writing[which(collapsed_read_counts_with_strand_correction_pvalue_for_writing$FREQ>min_supporting_reads & collapsed_read_counts_with_strand_correction_pvalue_for_writing$VAF>=min_vaf  & collapsed_read_counts_with_strand_correction_pvalue_for_writing$DP >= min_read_depth),]
 
-print(nrow(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered))
+# adjust start_pos to reflect padding base
+collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos - 1
+
 # convert variant coordinates from zero-based to 1-based coordinate system (ex. if RefGene was used)
 if (zero_based == T){
   collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos + 1

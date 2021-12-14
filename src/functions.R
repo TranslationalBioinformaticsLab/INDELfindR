@@ -802,7 +802,7 @@ return(chr_in_bam)
 
 # Function 14: Get ref and alt alleles, with extra conditional for adding padding base for simple insertion or deletions (only added to single bp indels per vcf 4.3 specifications)
 
-translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string){
+translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string,padding_base){
   
   cigar_coord_start <- min(cigar_coords)
   cigar_coord_end <- max(cigar_coords)
@@ -835,15 +835,17 @@ translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(
     alternate_allele_record <- alternate_allele_record[1]
   }
   
-  # test to see if it is a simple insertion
-  if (length(D_indices)==1 & length(I_indices)==0){
-    
-    reference_allele_record <- paste0(alternate_allele_record,reference_allele_record)
-  } else if (length(I_indices)==1 & length(D_indices)==0){
-   
-    alternate_allele_record <- paste0(alternate_allele_record,reference_allele_record)
-  }
- 
+  #test to see if it is a simple insertion
+  # if (length(D_indices)==1 & length(I_indices)==0){
+  #   reference_allele_record <- paste0(alternate_allele_record,reference_allele_record)
+  # } else if (length(I_indices)==1 & length(D_indices)==0){
+  #   alternate_allele_record <- paste0(alternate_allele_record,reference_allele_record)
+  # }
+  
+  # add preceding padding base
+   reference_allele_record <- paste0(padding_base,reference_allele_record)
+   alternate_allele_record <- paste0(padding_base,alternate_allele_record)
+  # 
   cigar_string_record <- paste(refined_cigar_string[cigar_coord_start:cigar_coord_end],collapse=",")
   
   return(list(reference_allele_record,alternate_allele_record,cigar_string_record)) # to access returned objects, use "reference_allele_record <- unlist(results)[[1]]", etc.
@@ -948,9 +950,11 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         cigar_start_for_reference <- cigar_start-number_leading_softclips-1
         cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container)-1
         
+        padding_base <- reference_sequence[cigar_start_for_reference-1]
+          
         reference_sequence_for_translation <- reference_sequence[cigar_start_for_reference:cigar_end_for_reference]
         query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
-        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
+        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string,padding_base)
         reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
         alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] #can convert this to regular condensed format cigar string
@@ -1040,9 +1044,11 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         cigar_start_for_reference <- cigar_start-number_leading_softclips-1
         cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container)-1
         
+        padding_base <- reference_sequence[cigar_start_for_reference-1]
+        
         reference_sequence_for_translation <- reference_sequence[cigar_start_for_reference:cigar_end_for_reference]
         query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
-        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
+        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string,padding_base)
         reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
         alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] # can convert this to regular condensed format cigar string
