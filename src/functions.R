@@ -96,17 +96,22 @@ translate_cigar_index_to_ref_and_query <- function(cigar_coords,cigar_coords_for
   #define Reference seq:
   # build reference sequence retrieval coords with D, X, and =
   reference_indices <- sort(c(D_indices,X_indices,equals_indices))
-  reference_allele_record <- reference_sequence_for_translation[reference_indices]
+  
+  #reference_allele_record <- reference_sequence_for_translation[reference_indices]
+  reference_allele_record <- letter(reference_sequence_for_translation,reference_indices) # improved replacement
   
   if (length(reference_allele_record) == 0){
-    reference_allele_record = reference_sequence_for_translation[1]
+    #reference_allele_record = reference_sequence_for_translation[1]
+    reference_allele_record = letter(reference_sequence_for_translation,1)
   }
   
   #define Alternate seq:
   # Build query read sequence retrieval coords to with I, X, and =
   alternate_indices <- sort(c(I_indices,X_indices,equals_indices))
-  alternate_allele_record <- query_sequence_string_for_translation[alternate_indices]
- 
+  #alternate_allele_record <- query_sequence_string_for_translation[alternate_indices]
+  alternate_allele_record <- letter(query_sequence_string_for_translation,alternate_indices) # improved replacement
+  
+  
   #reference_allele_record <- reference_sequence[cigar_coord_start:cigar_coord_end]
   #alternate_allele_record <- query_sequence_string[cigar_coord_start:cigar_coord_end]
   cigar_string_record <- paste(refined_cigar_string[cigar_coord_start:cigar_coord_end],collapse=",")
@@ -514,18 +519,29 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] #can convert this to regular condensed format cigar string
         cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
         
-        candidate_indel_record <-tibble(chr=chr_record,
-                                        start_pos=reference_start_record,
-                                        end_pos=reference_end_record,
-                                        refined_cigar_string=toString(exploded_cigar_string_record),
-                                        collapsed_cigar_string=cigar_string_record,
-                                        reference_allele=reference_allele_record,
-                                        alt_allele=alternate_allele_record,
-                                        strand = read_strand,
-                                        read_name = read_name_record)
+        # candidate_indel_record <-tibble(chr=chr_record,
+        #                                 start_pos=reference_start_record,
+        #                                 end_pos=reference_end_record,
+        #                                 refined_cigar_string=toString(exploded_cigar_string_record),
+        #                                 collapsed_cigar_string=cigar_string_record,
+        #                                 reference_allele=reference_allele_record,
+        #                                 alt_allele=alternate_allele_record,
+        #                                 strand = read_strand,
+        #                                 read_name = read_name_record)
+
+        candidate_indel_record <-c(chr=chr_record,
+                                   start_pos=reference_start_record,
+                                   end_pos=reference_end_record,
+                                   refined_cigar_string=toString(exploded_cigar_string_record),
+                                   collapsed_cigar_string=cigar_string_record,
+                                   reference_allele=reference_allele_record,
+                                   alt_allele=alternate_allele_record,
+                                   strand = read_strand,
+                                   read_name = read_name_record)
         
         #add indel record to per region table
-        per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+        # per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+        per_bam_region_indel_records <- bind_rows(per_bam_region_indel_records,candidate_indel_record)
         
         # clear the indel_candidate_container
         indel_candidate_container=c()
@@ -605,18 +621,29 @@ run_algo_on_one_read_explicit_args <- function(per_bam_region_indel_records,refi
         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] # can convert this to regular condensed format cigar string
         cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
         
-        candidate_indel_record <-tibble(chr=chr_record,
-                                        start_pos=reference_start_record,
-                                        end_pos=reference_end_record,
-                                        refined_cigar_string=toString(exploded_cigar_string_record),
-                                        collapsed_cigar_string=cigar_string_record,
-                                        reference_allele=reference_allele_record,
-                                        alt_allele=alternate_allele_record,
-                                        strand = read_strand,
-                                        read_name = read_name_record)
+        # candidate_indel_record <-tibble(chr=chr_record,
+        #                                 start_pos=reference_start_record,
+        #                                 end_pos=reference_end_record,
+        #                                 refined_cigar_string=toString(exploded_cigar_string_record),
+        #                                 collapsed_cigar_string=cigar_string_record,
+        #                                 reference_allele=reference_allele_record,
+        #                                 alt_allele=alternate_allele_record,
+        #                                 strand = read_strand,
+        #                                 read_name = read_name_record)
+        
+        candidate_indel_record <-c(chr=chr_record,
+                                   start_pos=reference_start_record,
+                                   end_pos=reference_end_record,
+                                   refined_cigar_string=toString(exploded_cigar_string_record),
+                                   collapsed_cigar_string=cigar_string_record,
+                                   reference_allele=reference_allele_record,
+                                   alt_allele=alternate_allele_record,
+                                   strand = read_strand,
+                                   read_name = read_name_record)
         
         #add indel record to per region table
-        per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+        # per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+        per_bam_region_indel_records <- bind_rows(per_bam_region_indel_records,candidate_indel_record)
         
         # clear the indel_candidate_container
         indel_candidate_container=c()
@@ -919,7 +946,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       consecutive_indel_operator_flag = F
       
       #print("FIVE")
-      
+
       #print(indel_candidate_container)
       
       first_remove <- length(indel_candidate_container)-(flanking_region_length-1)
@@ -950,8 +977,9 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         cigar_start_for_reference <- cigar_start-number_leading_softclips-1
         cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container)-1
         
-        padding_base <- reference_sequence[cigar_start_for_reference-1]
-          
+        #padding_base <- reference_sequence[cigar_start_for_reference-1]
+        padding_base <- letter(reference_sequence,cigar_start_for_reference-1) # improved replacement
+        
         reference_sequence_for_translation <- reference_sequence[cigar_start_for_reference:cigar_end_for_reference]
         query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
         indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string,padding_base)
@@ -960,18 +988,29 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] #can convert this to regular condensed format cigar string
         cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
         
-        candidate_indel_record <-tibble(chr=chr_record,
-                                        start_pos=reference_start_record,
-                                        end_pos=reference_end_record,
-                                        refined_cigar_string=toString(exploded_cigar_string_record),
-                                        collapsed_cigar_string=cigar_string_record,
-                                        reference_allele=reference_allele_record,
-                                        alt_allele=alternate_allele_record,
-                                        strand = read_strand,
-                                        read_name = read_name_record)
-        
+        # candidate_indel_record <-tibble(chr=chr_record,
+        #                                 start_pos=reference_start_record,
+        #                                 end_pos=reference_end_record,
+        #                                 refined_cigar_string=toString(exploded_cigar_string_record),
+        #                                 collapsed_cigar_string=cigar_string_record,
+        #                                 reference_allele=reference_allele_record,
+        #                                 alt_allele=alternate_allele_record,
+        #                                 strand = read_strand,
+        #                                 read_name = read_name_record)
+
+        candidate_indel_record <-c(chr=chr_record,
+                                   start_pos=reference_start_record,
+                                   end_pos=reference_end_record,
+                                   refined_cigar_string=toString(exploded_cigar_string_record),
+                                   collapsed_cigar_string=cigar_string_record,
+                                   reference_allele=reference_allele_record,
+                                   alt_allele=alternate_allele_record,
+                                   strand = as.character(read_strand),
+                                   read_name = read_name_record)
+ 
         #add indel record to per region table
-        per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+       # per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+        per_bam_region_indel_records <- bind_rows(per_bam_region_indel_records,candidate_indel_record)
         
         # clear the indel_candidate_container
         indel_candidate_container=c()
@@ -1054,18 +1093,30 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] # can convert this to regular condensed format cigar string
         cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
         
-        candidate_indel_record <-tibble(chr=chr_record,
+        # candidate_indel_record <-tibble(chr=chr_record,
+        #                                 start_pos=reference_start_record,
+        #                                 end_pos=reference_end_record,
+        #                                 refined_cigar_string=toString(exploded_cigar_string_record),
+        #                                 collapsed_cigar_string=cigar_string_record,
+        #                                 reference_allele=reference_allele_record,
+        #                                 alt_allele=alternate_allele_record,
+        #                                 strand = read_strand,
+        #                                 read_name = read_name_record)
+        
+        candidate_indel_record <-c(chr=chr_record,
                                         start_pos=reference_start_record,
                                         end_pos=reference_end_record,
                                         refined_cigar_string=toString(exploded_cigar_string_record),
                                         collapsed_cigar_string=cigar_string_record,
                                         reference_allele=reference_allele_record,
                                         alt_allele=alternate_allele_record,
-                                        strand = read_strand,
+                                        strand = as.character(read_strand),
                                         read_name = read_name_record)
         
+       
         #add indel record to per region table
-        per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+        # per_bam_region_indel_records <- rbind(per_bam_region_indel_records,candidate_indel_record)
+        per_bam_region_indel_records <- bind_rows(per_bam_region_indel_records,candidate_indel_record)
         
         # clear the indel_candidate_container
         indel_candidate_container=c()
@@ -1082,7 +1133,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
   } # end each operator iteration
   
   return(per_bam_region_indel_records)
-  
+
 }
 
 # Function 16: Extract all reads per bam region and run algo. Version to add simple indel padding.
@@ -1115,29 +1166,56 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
   
   gal <- readGAlignments(bamPath, param=parameters, use.names=TRUE)
   
+  # conditional protects downstream functions from erroring due to no reads to query
   if (length(gal) >= 1){ # minimum bam region coverage 1 read
     
-    for (read_num in 1:length(gal)){
+    # dev optimize start
+    #gal_with_indels <- subset(gal)
+    
+    indel_operators <- c("I","D")
+    pattern = paste(indel_operators, collapse="|")
+    
+    gal_with_indels <- gal[which(grepl(pattern,mcols(gal)$cigar)==T),]
+    
+    # dev optimize end
+    
+    for (read_num in 1:length(gal_with_indels)){
       
       #print(read_num)
       
-      # get cigar string, check if indel operators are in the read, and decide to do work
-      cigar_string <- mcols(gal)$cigar[[read_num]]
-      
-      indel_operators <- c("I","D")
-      pattern = paste(indel_operators, collapse="|")
-      
-      if (grepl(pattern, cigar_string)==T){
+      # below lines are replaced with which() subset above so mcols isn't repeatedly called without need, since this filter step was costly
+      # # get cigar string, check if indel operators are in the read, and decide to do work
+      # cigar_string <- mcols(gal)$cigar[[read_num]]
+      # 
+      # indel_operators <- c("I","D")
+      # pattern = paste(indel_operators, collapse="|")
+      # 
+      # if (grepl(pattern, cigar_string)==T){
         
         #message(paste("This read has indel operators:",cigar_string))
         
+        # add cigar string here since not previously defined anymore with addition of subset for indels
+        #cigar_string <- mcols(gal_with_indels)$cigar[[read_num]]
+        cigar_string <- gal_with_indels@cigar[[read_num]] # improved replacement
+        
         # if indel is present in cigar string, define read other bam fields
-        query_sequence_string <- mcols(gal)$seq[[read_num]]
-        #read_qual_string <- mcols(gal)$qual[[read_num]]
-        read_pos <- mcols(gal)$pos[[read_num]]
+        #query_sequence_string <- mcols(gal_with_indels)$seq[[read_num]]
+        query_sequence_string <- gal_with_indels@elementMetadata@listData$seq[[read_num]]# improved replacement
+        
+        #read_qual_string <- mcols(gal_with_indels)$qual[[read_num]]
+        #read_pos <- mcols(gal_with_indels)$pos[[read_num]]
+        read_pos <- gal_with_indels@elementMetadata@listData$pos[[read_num]]#  improved replacement
+        
         query_read_length <- length(query_sequence_string)
-        read_strand <- mcols(gal)$strand[[read_num]]
-        read_name_record <- (names(gal)[[read_num]])
+
+         #read_strand <- mcols(gal_with_indels)$strand[[read_num]]
+         read_strand <- gal_with_indels@strand[read_num]@values # improved replacement
+         
+        # improved replacement
+        
+        #read_name_record <- (names(gal_with_indels)[[read_num]])
+        read_name_record <- gal_with_indels@NAMES[read_num]
+        # improved replacement
         
         if (verbose_arg==T){
           
@@ -1174,10 +1252,11 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
         # Run algorithm on read and collect indel calls
         per_bam_region_indel_records <- run_algo_on_one_read_explicit_args_with_simple_indel_padding(per_bam_region_indel_records,refined_cigar_string,flanking_region_length,query_sequence_string,reference_sequence,read_pos,query_read_length,read_strand,read_name_record,number_leading_softclips,each_chromosome,min_indel_length)
         
-      } # end conditional if read has any I or D operators
+      #} no longer needed with replacement of conditional with prior subset # end conditional if read has any I or D operators
       
     } # end per read iteration
     
+    rm(gal_with_indels)
     rm(gal)
     
   } # end coverage > 2 conditional

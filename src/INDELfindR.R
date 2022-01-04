@@ -103,23 +103,24 @@ min_vaf <- args$vaf_filter
 min_read_depth <- args$read_depth_filter
 zero_based <- args$zero_based
 output_dir <- args$output_dir
-# To run during dev:
 
+# To run during dev:
 bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
 bam_region_bin_size <- 100000 #dev-on
 verbose_arg=FALSE
 flanking_region_length <- 10
 target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
-number_cores <- 10 # Make default 2
+number_cores <- 8 # Make default 2
 primary_chromosomes <- T
 min_indel_length <- 3
 mapq_threshold <- 20
-min_supporting_reads <- 1
+min_supporting_reads <- 4
 min_vaf <- 0.01
-min_read_depth <- 20
-zero_to_one_based <- F
+min_read_depth <- 10
+zero_based <- F
+output_dir <- "/Users/George/indel_detection_tool_project/test_output_dir"
 
-# #bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/bam_for_testing_1656854-1657354.bam"
+# bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/bam_for_testing_1656854-1657354.bam"
 # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
 # #bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/test_read.bam"
 # #max_window_length <- 5 #dev-on
@@ -130,7 +131,7 @@ zero_to_one_based <- F
 # #sliding_window_size <- 20
 # #Optional parameters for testing:
 # target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
-# #target_regions <- F
+# target_regions <- F
 # #target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/debug_10_27.txt"
 # number_cores <- 10 # Make default 2 
 # primary_chromosomes <- T
@@ -187,11 +188,22 @@ hg38_genome <- BSgenome.Hsapiens.UCSC.hg38
 
 # define data table for reporting all refined cigar string frames in sliding windows
 
-master_indel_record_table <- c("chr","sliding_reference_start_record",
-                               "sliding_reference_end_record",
-                               "exploded_refined_cigar_string",
-                               "collapsed_refined_cigar_string",
-                               "ref_allele",
+
+# master_indel_record_table <- c("chr","sliding_reference_start_record",
+#                                "sliding_reference_end_record",
+#                                "exploded_refined_cigar_string",
+#                                "collapsed_refined_cigar_string",
+#                                "ref_allele",
+#                                "alt_allele",
+#                                "strand",
+#                                "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
+
+
+master_indel_record_table <- c("chr","start_pos",
+                               "end_pos",
+                               "refined_cigar_string",
+                               "collapsed_cigar_string",
+                               "reference_allele",
                                "alt_allele",
                                "strand",
                                "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
@@ -240,7 +252,7 @@ for (each_chromosome in chr_in_bam){
       if (max_pos-min_pos < bam_region_bin_size){
         target_bin_size <- max_pos-min_pos
       }
-
+      
       intervals <- seq_with_uneven_last(from=min_pos,to=max_pos,by=target_bin_size)
       
       # define coordinates of sliding windows
@@ -249,21 +261,36 @@ for (each_chromosome in chr_in_bam){
                                                 end=intervals[-1])
       
       # Initialize dataframe for collecting each bam region indel calls
-      per_bam_region_indel_records <- c("chr","sliding_reference_start_record",
-                                        "sliding_reference_end_record",
-                                        "exploded_refined_cigar_string",
-                                        "collapsed_refined_cigar_string",
-                                        "ref_allele",
+      # per_bam_region_indel_records <- c("chr","sliding_reference_start_record",
+      #                                   "sliding_reference_end_record",
+      #                                   "exploded_refined_cigar_string",
+      #                                   "collapsed_refined_cigar_string",
+      #                                   "ref_allele",
+      #                                   "alt_allele",
+      #                                   "strand",
+      #                                   "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
+      # 
+      per_bam_region_indel_records <- c("chr",
+                                        "start_pos",
+                                        "end_pos",
+                                        "refined_cigar_string",
+                                        "collapsed_cigar_string",
+                                        "reference_allele",
                                         "alt_allele",
                                         "strand",
                                         "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
-     
+      
       # Find indels in each bam region using all available cores in parallel
 
-        per_bam_region_indel_records <-
+        # per_bam_region_indel_records <-
+        #   do.call(
+        #     rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+      
+      # Test without calling handelrs  
+      per_bam_region_indel_records <-
           do.call(
-            rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
-
+            rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F))
+      
       # Add each chromosome results to the master results table
       master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
       
@@ -273,13 +300,13 @@ for (each_chromosome in chr_in_bam){
       #   per_bam_region_indel_records <-
       #     do.call(
       #       rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
-      #   
       # } else {
       #   print("This is working")
       #   per_bam_region_indel_records <-
       #     do.call(
       #       rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
       # }
+      
       ## Add each chromosome results to the master results table
       #master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
       
@@ -332,21 +359,29 @@ for (each_chromosome in chr_in_bam){
     rm(p_for_chr_extract)
     
     # Initialize dataframe for collecting each bam region indel calls
-    per_bam_region_indel_records <- c("chr","sliding_reference_start_record",
-                                      "sliding_reference_end_record",
-                                      "exploded_refined_cigar_string",
-                                      "collapsed_refined_cigar_string",
-                                      "ref_allele",
+    per_bam_region_indel_records <- c("chr",
+                                      "start_pos",
+                                      "end_pos",
+                                      "refined_cigar_string",
+                                      "collapsed_cigar_string",
+                                      "reference_allele",
                                       "alt_allele",
                                       "strand",
                                       "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
     
     # Find indels in each bam region using all available cores in parallel
 
-      per_bam_region_indel_records <-
-        do.call(
-          rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
+      # per_bam_region_indel_records <-
+      #   do.call(
+      #     rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F,mc.stdout=c("output"),mc.warnings=c("output")))
 
+    # Find indels in each bam region using all available cores in parallel
+ 
+    # Test without calling handelrs  
+    per_bam_region_indel_records <-
+      do.call(
+        rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F))
+    
     master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
 
     # # Find indels in each bam region using all available cores in parallel
@@ -390,7 +425,8 @@ collapsed_read_counts_with_strand_correction_pvalue_for_writing <- calculate_str
 collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered <- collapsed_read_counts_with_strand_correction_pvalue_for_writing[which(collapsed_read_counts_with_strand_correction_pvalue_for_writing$FREQ>min_supporting_reads & collapsed_read_counts_with_strand_correction_pvalue_for_writing$VAF>=min_vaf  & collapsed_read_counts_with_strand_correction_pvalue_for_writing$DP >= min_read_depth),]
 
 # adjust start_pos to reflect padding base
-collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos - 1
+collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos <- as.integer(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos)
+collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- as.integer(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos) - 1
 
 # convert variant coordinates from zero-based to 1-based coordinate system (ex. if RefGene was used)
 if (zero_based == T){
@@ -399,8 +435,6 @@ if (zero_based == T){
 }
 
 message(paste0("Saving ",nrow(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered), " indels to output directory: ",output_dir))
-
-output_dir <- "/Users/George/indel_detection_tool_project/test_output_dir"
 
 # # make directory
 # suppressWarnings(
