@@ -111,7 +111,6 @@ translate_cigar_index_to_ref_and_query <- function(cigar_coords,cigar_coords_for
   #alternate_allele_record <- query_sequence_string_for_translation[alternate_indices]
   alternate_allele_record <- letter(query_sequence_string_for_translation,alternate_indices) # improved replacement
   
-  
   #reference_allele_record <- reference_sequence[cigar_coord_start:cigar_coord_end]
   #alternate_allele_record <- query_sequence_string[cigar_coord_start:cigar_coord_end]
   cigar_string_record <- paste(refined_cigar_string[cigar_coord_start:cigar_coord_end],collapse=",")
@@ -829,7 +828,8 @@ return(chr_in_bam)
 
 # Function 14: Get ref and alt alleles, with extra conditional for adding padding base for simple insertion or deletions (only added to single bp indels per vcf 4.3 specifications)
 
-translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string,padding_base){
+
+translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string){
   
   cigar_coord_start <- min(cigar_coords)
   cigar_coord_end <- max(cigar_coords)
@@ -839,14 +839,14 @@ translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(
   
   exploded_cigar_string_record <- refined_cigar_string[cigar_coord_start:cigar_coord_end]
   
-  D_indices <- which(exploded_cigar_string_record=="D")
-  I_indices <- which(exploded_cigar_string_record=="I")
-  equals_indices <- which(exploded_cigar_string_record=="=")
-  X_indices <- which(exploded_cigar_string_record=="X")
+  D_indices <- which(exploded_cigar_string_record=="D")+1
+  I_indices <- which(exploded_cigar_string_record=="I")+1
+  equals_indices <- which(exploded_cigar_string_record=="=")+1
+  X_indices <- which(exploded_cigar_string_record=="X")+1
   
   # define Reference seq:
   # build reference sequence retrieval coords with D, X, and =
-  reference_indices <- sort(c(D_indices,X_indices,equals_indices))
+  reference_indices <- sort(c(1,D_indices,X_indices,equals_indices))
   reference_allele_record <- reference_sequence_for_translation[reference_indices]
   
   if (length(reference_allele_record) == 0){
@@ -855,12 +855,12 @@ translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(
   
   #define Alternate seq:
   # Build query read sequence retrieval coords to with I, X, and =
-
+  
   alternate_allele_record <- query_sequence_string_for_translation
   
-  if (cigar_coords_for_query_end < cigar_coords_for_query_start){
-    alternate_allele_record <- alternate_allele_record[1]
-  }
+  # if (cigar_coords_for_query_end < cigar_coords_for_query_start){ # Dev off 
+  #   alternate_allele_record <- alternate_allele_record[2]
+  # }
   
   #test to see if it is a simple insertion
   # if (length(D_indices)==1 & length(I_indices)==0){
@@ -869,15 +869,118 @@ translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(
   #   alternate_allele_record <- paste0(alternate_allele_record,reference_allele_record)
   # }
   
-  # add preceding padding base
-   reference_allele_record <- paste0(padding_base,reference_allele_record)
-   alternate_allele_record <- paste0(padding_base,alternate_allele_record)
-  # 
+  # # add preceding padding base
+  # reference_allele_record <- paste0(padding_base,reference_allele_record)
+  # alternate_allele_record <- paste0(padding_base,alternate_allele_record)
+  # # 
   cigar_string_record <- paste(refined_cigar_string[cigar_coord_start:cigar_coord_end],collapse=",")
   
   return(list(reference_allele_record,alternate_allele_record,cigar_string_record)) # to access returned objects, use "reference_allele_record <- unlist(results)[[1]]", etc.
   
 }
+
+# new dev version pre
+# translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string,padding_base){
+#   
+#   cigar_coord_start <- min(cigar_coords)
+#   cigar_coord_end <- max(cigar_coords)
+#   
+#   cigar_coords_for_query_end <- cigar_coords_for_query[length(cigar_coords_for_query)]
+#   cigar_coords_for_query_start <- cigar_coords_for_query[1]
+#   
+#   exploded_cigar_string_record <- refined_cigar_string[cigar_coord_start:cigar_coord_end]
+#   
+#   D_indices <- which(exploded_cigar_string_record=="D")+1
+#   I_indices <- which(exploded_cigar_string_record=="I")+1
+#   equals_indices <- which(exploded_cigar_string_record=="=")+1
+#   X_indices <- which(exploded_cigar_string_record=="X")+1
+#   
+#   # define Reference seq:
+#   # build reference sequence retrieval coords with D, X, and =
+#   reference_indices <- sort(c(1,D_indices,X_indices,equals_indices))
+#   reference_allele_record <- reference_sequence_for_translation[reference_indices]
+#   
+#   if (length(reference_allele_record) == 0){
+#     reference_allele_record = reference_sequence_for_translation[1]
+#   }
+#   
+#   #define Alternate seq:
+#   # Build query read sequence retrieval coords to with I, X, and =
+#   
+#   alternate_allele_record <- query_sequence_string_for_translation
+#   
+#   if (cigar_coords_for_query_end < cigar_coords_for_query_start){
+#     alternate_allele_record <- alternate_allele_record[2]
+#   }
+#   
+#   #test to see if it is a simple insertion
+#   # if (length(D_indices)==1 & length(I_indices)==0){
+#   #   reference_allele_record <- paste0(alternate_allele_record,reference_allele_record)
+#   # } else if (length(I_indices)==1 & length(D_indices)==0){
+#   #   alternate_allele_record <- paste0(alternate_allele_record,reference_allele_record)
+#   # }
+#   
+#   # # add preceding padding base
+#   # reference_allele_record <- paste0(padding_base,reference_allele_record)
+#   # alternate_allele_record <- paste0(padding_base,alternate_allele_record)
+#   # # 
+#   cigar_string_record <- paste(refined_cigar_string[cigar_coord_start:cigar_coord_end],collapse=",")
+#   
+#   return(list(reference_allele_record,alternate_allele_record,cigar_string_record)) # to access returned objects, use "reference_allele_record <- unlist(results)[[1]]", etc.
+#   
+# }
+
+# Old version
+
+# translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string,padding_base){
+#   
+#   cigar_coord_start <- min(cigar_coords)
+#   cigar_coord_end <- max(cigar_coords)
+#   
+#   cigar_coords_for_query_end <- cigar_coords_for_query[length(cigar_coords_for_query)]
+#   cigar_coords_for_query_start <- cigar_coords_for_query[1]
+#   
+#   exploded_cigar_string_record <- refined_cigar_string[cigar_coord_start:cigar_coord_end]
+#   
+#   D_indices <- which(exploded_cigar_string_record=="D")
+#   I_indices <- which(exploded_cigar_string_record=="I")
+#   equals_indices <- which(exploded_cigar_string_record=="=")
+#   X_indices <- which(exploded_cigar_string_record=="X")
+#   
+#   # define Reference seq:
+#   # build reference sequence retrieval coords with D, X, and =
+#   reference_indices <- sort(c(D_indices,X_indices,equals_indices))
+#   reference_allele_record <- reference_sequence_for_translation[reference_indices]
+#   
+#   if (length(reference_allele_record) == 0){
+#     reference_allele_record = reference_sequence_for_translation[1]
+#   }
+#   
+#   #define Alternate seq:
+#   # Build query read sequence retrieval coords to with I, X, and =
+# 
+#   alternate_allele_record <- query_sequence_string_for_translation
+#   
+#   if (cigar_coords_for_query_end < cigar_coords_for_query_start){
+#     alternate_allele_record <- alternate_allele_record[1]
+#   }
+#   
+#   #test to see if it is a simple insertion
+#   # if (length(D_indices)==1 & length(I_indices)==0){
+#   #   reference_allele_record <- paste0(alternate_allele_record,reference_allele_record)
+#   # } else if (length(I_indices)==1 & length(D_indices)==0){
+#   #   alternate_allele_record <- paste0(alternate_allele_record,reference_allele_record)
+#   # }
+#   
+#   # add preceding padding base
+#    reference_allele_record <- paste0(padding_base,reference_allele_record)
+#    alternate_allele_record <- paste0(padding_base,alternate_allele_record)
+#   # 
+#   cigar_string_record <- paste(refined_cigar_string[cigar_coord_start:cigar_coord_end],collapse=",")
+#   
+#   return(list(reference_allele_record,alternate_allele_record,cigar_string_record)) # to access returned objects, use "reference_allele_record <- unlist(results)[[1]]", etc.
+#   
+# }
 
 
 # Function 15: Run algorithm on each read and collect indel calls to add to master table. Version for adding padding to simple indels.
@@ -967,22 +1070,22 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         
         # Define indel records and add indel candidate record to per bam region table
         cigar_end_for_query <- each_operator-flanking_region_length-number_deletions_encountered
-        cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_per_candidate)
+        cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_per_candidate)-1 # dev change add -1
         cigar_coords_for_query<- cigar_start:cigar_end_for_query
         
         reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
-        reference_end_record <- reference_start_record+length(indel_candidate_container)-1
+        reference_end_record <- reference_start_record+length(indel_candidate_container) # dev change (remove)
         chr_record <- each_chromosome
 
         cigar_start_for_reference <- cigar_start-number_leading_softclips-1
-        cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container)-1
+        cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container) # dev change remove
         
         #padding_base <- reference_sequence[cigar_start_for_reference-1]
-        padding_base <- letter(reference_sequence,cigar_start_for_reference-1) # improved replacement
+        #padding_base <- letter(reference_sequence,cigar_start_for_reference-1) # improved replacement
         
         reference_sequence_for_translation <- reference_sequence[cigar_start_for_reference:cigar_end_for_reference]
         query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
-        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string,padding_base)
+        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
         reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
         alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] #can convert this to regular condensed format cigar string
@@ -1013,11 +1116,11 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         per_bam_region_indel_records <- bind_rows(per_bam_region_indel_records,candidate_indel_record)
         
         # clear the indel_candidate_container
-        indel_candidate_container=c()
+        indel_candidate_container=c() # dev off temp
         
       } else {
         # don't save indel and keep moving on nothing
-        indel_candidate_container=c()
+        indel_candidate_container=c() # dev off temp
       } # end conditional min_indel_length conditional
       
       
@@ -1072,22 +1175,34 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         cigar_coords <- cigar_start:cigar_end
         
         cigar_end_for_query <- each_operator-num_to_remove-number_deletions_encountered
-        cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_per_candidate)
+        cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_per_candidate)-1 # dev change
         cigar_coords_for_query<- cigar_start:cigar_end_for_query
         
         # Define indel records and add indel candidate record to per bam region table
         reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
-        reference_end_record <- reference_start_record+length(indel_candidate_container)-1
+        reference_end_record <- reference_start_record+length(indel_candidate_container) #-1 # dev change
         
         chr_record <- each_chromosome
         cigar_start_for_reference <- cigar_start-number_leading_softclips-1
-        cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container)-1
+        cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container) #-1 # dev change
         
-        padding_base <- reference_sequence[cigar_start_for_reference-1]
+        # # Define indel records and add indel candidate record to per bam region table
+        # cigar_end_for_query <- each_operator-flanking_region_length-number_deletions_encountered
+        # cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_per_candidate)-1 # dev change add -1
+        # cigar_coords_for_query<- cigar_start:cigar_end_for_query
+        # 
+        # reference_start_record <- read_pos+cigar_start-number_leading_softclips-2
+        # reference_end_record <- reference_start_record+length(indel_candidate_container) # dev change (remove)
+        # chr_record <- each_chromosome
+        # 
+        # cigar_start_for_reference <- cigar_start-number_leading_softclips-1
+        # cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container) # dev change remove
+  
+        #padding_base <- reference_sequence[cigar_start_for_reference-1]
         
         reference_sequence_for_translation <- reference_sequence[cigar_start_for_reference:cigar_end_for_reference]
         query_sequence_string_for_translation <- query_sequence_string[cigar_start_for_query:cigar_end_for_query]
-        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string,padding_base)
+        indel_record_results_list <- translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string)
         reference_allele_record <- toString(unlist(indel_record_results_list)[[1]])
         alternate_allele_record <- toString(unlist(indel_record_results_list)[[2]])
         exploded_cigar_string_record <- str_split(unlist(indel_record_results_list)[[3]],",")[[1]] # can convert this to regular condensed format cigar string
@@ -1167,7 +1282,7 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
   gal <- readGAlignments(bamPath, param=parameters, use.names=TRUE)
   
   # conditional protects downstream functions from erroring due to no reads to query
-  if (length(gal) >= 1){ # minimum bam region coverage 1 read
+  # Move conditional to after gal_with_indels subset # if (length(gal) >= 1){ # minimum bam region coverage 1 read
     
     # dev optimize start
     #gal_with_indels <- subset(gal)
@@ -1178,7 +1293,8 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
     gal_with_indels <- gal[which(grepl(pattern,mcols(gal)$cigar)==T),]
     
     # dev optimize end
-    
+    if (length(gal_with_indels) >= 1){ 
+      
     for (read_num in 1:length(gal_with_indels)){
       
       #print(read_num)

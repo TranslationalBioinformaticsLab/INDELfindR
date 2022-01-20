@@ -82,9 +82,9 @@ parser$add_argument("-vaf", "--vaf_filter", type="double", default=0.01,
 parser$add_argument("-dp", "--read_depth_filter", type="double", default=20, 
                     help="Minumum indel range read depth required for an indel to be reported",
                     metavar="number")
-parser$add_argument("-z", "--zero_based", action="store_false",
-                    help="convert variant calls from zero based to one based")
-parser$add_argument("-o", "--output_dir", default=getwd(),
+# parser$add_argument("-z", "--zero_based", action="store_true",
+#                     help="convert variant calls from zero based to one based")
+parser$add_argument("-o", "--outname", default=getwd(),
                     help="Define the output directory path")
 
 args <- parser$parse_args()
@@ -101,24 +101,24 @@ mapq_threshold <- args$mapq_filter
 min_supporting_reads <- args$number_reads
 min_vaf <- args$vaf_filter
 min_read_depth <- args$read_depth_filter
-zero_based <- args$zero_based
-output_dir <- args$output_dir
+#zero_based <- args$zero_based
+outname <- args$outname
 
-# To run during dev:
-bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
-bam_region_bin_size <- 100000 #dev-on
-verbose_arg=FALSE
-flanking_region_length <- 10
-target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
-number_cores <- 8 # Make default 2
-primary_chromosomes <- T
-min_indel_length <- 3
-mapq_threshold <- 20
-min_supporting_reads <- 4
-min_vaf <- 0.01
-min_read_depth <- 10
-zero_based <- F
-output_dir <- "/Users/George/indel_detection_tool_project/test_output_dir"
+# # To run during dev:
+# bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
+# bam_region_bin_size <- 100000 #dev-on
+# verbose_arg=FALSE
+# flanking_region_length <- 10
+# target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
+# number_cores <- 8 # Make default 2
+# primary_chromosomes <- T
+# min_indel_length <- 3
+# mapq_threshold <- 20
+# min_supporting_reads <- 4
+# min_vaf <- 0.01
+# min_read_depth <- 10
+# #zero_based <- F
+# outname <- "/Users/George/indel_detection_tool_project/test_output_dir/test_vcf_output"
 
 # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/bam_for_testing_1656854-1657354.bam"
 # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
@@ -164,7 +164,7 @@ suppressMessages(library(bettermc))
 #
 #############################################################################################
 
-source("/Users/George/indel_detection_tool_project/indelfindr/src/functions.R")
+source("/gpfs/data/dgamsiz/Uzun_Lab/gtollefs/indel_detection_project/running_directory/functions.R")
 
 #############################################################################################
 #
@@ -187,7 +187,6 @@ hg38_genome <- BSgenome.Hsapiens.UCSC.hg38
 #############################################################################################
 
 # define data table for reporting all refined cigar string frames in sliding windows
-
 
 # master_indel_record_table <- c("chr","sliding_reference_start_record",
 #                                "sliding_reference_end_record",
@@ -381,7 +380,7 @@ for (each_chromosome in chr_in_bam){
     per_bam_region_indel_records <-
       do.call(
         rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F))
-    
+
     master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
 
     # # Find indels in each bam region using all available cores in parallel
@@ -419,22 +418,22 @@ collapsed_read_counts_with_strand <- rename(dplyr::count(master_indel_record_tab
 collapsed_read_counts <- rename(count(master_indel_record_table_no_dup_reads, chr,start_pos,end_pos,refined_cigar_string,collapsed_cigar_string,reference_allele,alt_allele), FREQ = n)
 
 # collapsed_read_counts_with_strand_correction_pvalue_for_writing <- calculate_stand_bias_pval_vaf_and_dp(collapsed_read_counts,master_indel_record_table_no_dup_reads)
-collapsed_read_counts_with_strand_correction_pvalue_for_writing <- calculate_strand_bias_pval_vaf_and_dp_parallel(collapsed_read_counts,master_indel_record_table_no_dup_reads,number_cores)
+collapsed_read_counts_with_strand_correction_pvalue_for_writing <- suppressMessages(calculate_strand_bias_pval_vaf_and_dp_parallel(collapsed_read_counts,master_indel_record_table_no_dup_reads,number_cores))
 
 # filter one read calls
 collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered <- collapsed_read_counts_with_strand_correction_pvalue_for_writing[which(collapsed_read_counts_with_strand_correction_pvalue_for_writing$FREQ>min_supporting_reads & collapsed_read_counts_with_strand_correction_pvalue_for_writing$VAF>=min_vaf  & collapsed_read_counts_with_strand_correction_pvalue_for_writing$DP >= min_read_depth),]
 
 # adjust start_pos to reflect padding base
 collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos <- as.integer(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos)
-collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- as.integer(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos) - 1
+collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- as.integer(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos) # no longer needed after ref and query fix # - 1
 
-# convert variant coordinates from zero-based to 1-based coordinate system (ex. if RefGene was used)
-if (zero_based == T){
-  collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos + 1
-  collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos <- collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos + 1
-}
+# # convert variant coordinates from zero-based to 1-based coordinate system (ex. if RefGene was used)
+# if (zero_based == T){
+#   collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos + 1
+#   collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos <- collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos + 1
+# }
 
-message(paste0("Saving ",nrow(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered), " indels to output directory: ",output_dir))
+message(paste0("Saving ",nrow(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered), " indels to output filepath: ",outname,"."))
 
 # # make directory
 # suppressWarnings(
@@ -442,10 +441,12 @@ message(paste0("Saving ",nrow(collapsed_read_counts_with_strand_correction_pvalu
 #   '/Users/George/indel_detection_tool_project/test_output_dir' already exists")"
 # )
 
-dir.create(file.path(output_dir)) # suppress warnings
+#dir.create(file.path(outname)) # suppress warnings
 
 # write out VCF file
-write.vcf(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered,phased=FALSE,paste0(output_dir,"/test_vcf_output.vcf"))
+write.vcf(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered,phased=FALSE,paste0(outname,".vcf"))
 
 #write out data table with cigar string
-write.table(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered,paste0(output_dir,"/test_output_table.csv"),sep=",",row.names=F)
+write.table(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered,paste0(outname,".csv"),sep=",",row.names=F)
+
+message("Run Complete")
