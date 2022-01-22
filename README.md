@@ -1,14 +1,5 @@
 # INDELfindR
 
-             _   _    ____  U _____ u  _       _____              _   _    ____    ____     
-    ___     | \ |"|  |  _"\ \| ___"|/ |"|     |" ___|    ___     | \ |"|  |  _"\U |  _"\ u  
-   |_"_|   <|  \| |>/| | | | |  _|" U | | u  U| |_  u   |_"_|   <|  \| |>/| | | |\| |_) |/  
-    | |    U| |\  |uU| |_| |\| |___  \| |/__ \|  _|/     | |    U| |\  |uU| |_| |\|  _ <    
-  U/| |\u   |_| \_|  |____/ u|_____|  |_____| |_|      U/| |\u   |_| \_|  |____/ u|_| \_\   
-.-,_|___|_,-.||   \\,-.|||_   <<   >>  //  \\  )(\\,-.-,_|___|_,-.||   \\,-.|||_   //   \\_  
- \_)-' '-(_/ (_")  (_/(__)_) (__) (__)(_")("_)(__)(_/ \_)-' '-(_/ (_")  (_/(__)_) (__)  (__)
-
-
 ## About
 INDELfindR is an R based command line tool for detecting simple and complex insertion deletion (INDEL) variants which outputs variant calls in a VCF v4.3 file compatible with downstream analysis and annotation tools.
 
