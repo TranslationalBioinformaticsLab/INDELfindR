@@ -1,3 +1,0 @@
-Rscript indelfindr.R --alignment_file sample_name.bam --bam_bin_size 100000 --flanking_region_length 10 --number_cores 8 --primary_chromosomes --min_indel_length 3 --mapq_filter 20 --number_reads 4 --vaf_filter 0.01 --read_depth_filter 10 --outname /indelfindr_results/sample_name
-
-table_annovar.pl /indelfindr_results/sample_name.vcf /gpfs/data/dgamsiz/Uzun_Lab/gtollefs/annovar/humandb -buildver hg38 -out sample_name -remove -protocol refGene,avsnp150,clinvar_20210501,cosmic94_coding -operation g,f,f,f -nastring . -polish  -vcfinput
