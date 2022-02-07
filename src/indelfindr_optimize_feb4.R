@@ -7,7 +7,6 @@
 #
 #############################################################################################
 
-
 logo <- r"{ 
              _   _    ____  U _____ u  _       _____              _   _    ____    ____     
     ___     | \ |"|  |  _"\ \| ___"|/ |"|     |" ___|    ___     | \ |"|  |  _"\U |  _"\ u  
@@ -103,14 +102,17 @@ min_vaf <- args$vaf_filter
 min_read_depth <- args$read_depth_filter
 #zero_based <- args$zero_based
 outname <- args$outname
-
-# To run during dev:
+# 
+# #To run during dev:
 # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
-# bam_region_bin_size <- 100000 #dev-on
+# #bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/miss_validate_igv/miss_5.sorted.bam"
+# bam_region_bin_size <- 100000000 #dev-on
 # verbose_arg=FALSE
 # flanking_region_length <- 10
-# target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
-# number_cores <- 8 # Make default 2
+# target_regions <- F
+# #target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
+# #target_regions <- "/Users/George/indel_detection_tool_project/indelfindr/dev_scripts/complex_indel_bam.bed"
+# number_cores <- 4 # Make default 2
 # primary_chromosomes <- T
 # min_indel_length <- 3
 # mapq_threshold <- 20
@@ -164,8 +166,8 @@ suppressMessages(library(bettermc))
 #
 #############################################################################################
 
-source("/gpfs/data/dgamsiz/Uzun_Lab/gtollefs/indel_detection_project/running_directory/functions.R")
-#source("/Users/George/indel_detection_tool_project/indelfindr/src/functions.R")
+source("/gpfs/data/dgamsiz/Uzun_Lab/gtollefs/indel_detection_project/running_directory/functions_complex_op.R")
+#source("/Users/George/indel_detection_tool_project/indelfindr/src/functions_complex_op.R")
 
 #############################################################################################
 #
@@ -209,28 +211,35 @@ master_indel_record_table <- c("chr","start_pos",
                                "read_name")  %>% purrr::map_dfc(setNames, object = list(as.character()))
 
 # load target regions
-
-if (target_regions != FALSE) {
-  
-  # load target regions
-  target_regions_table <- read.table(target_regions,sep="\t",col.names = c("chr","start","stop"))
-  chr_in_bam <- unique(target_regions_table$chr)
-  
-} else {
-  
-  # get chr names in bam file to search
-  p = ScanBamParam(what=c("rname", "pos"))
-  
-  chr_in_bam <- na.omit(unique(as.data.frame(scanBam(bamPath, param=p))$rname))
-}
+# 
+# if (target_regions != FALSE) {
+#   
+#   # load target regions
+#   target_regions_table <- read.table(target_regions,sep="\t",col.names = c("chr","start","stop"))
+#   chr_in_bam <- unique(target_regions_table$chr)
+#   
+# } else {
+#   
+#   # # get chr names in bam file to search
+#   # p = ScanBamParam(what=c("rname", "pos"))
+#   # 
+#   # chr_in_bam <- na.omit(unique(as.data.frame(scanBam(bamPath, param=p))$rname))
+# }
 
 # Subset primary chromosomes only for extracting reads for indel calling (optional)
 if (primary_chromosomes == T){
-  chr_in_bam <- get_primary_chroms(chr_in_bam)
+  #chr_in_bam <- get_primary_chroms(chr_in_bam)
+  chr_in_bam <-  c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9",'chr10',"chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX","chrY","chrM")
+}
+
+if (target_regions != FALSE) {
+  # load target regions
+  target_regions_table <- read.table(target_regions,sep="\t",col.names = c("chr","start","stop"))
+  chr_in_bam <- unique(target_regions_table$chr)
 }
 
 for (each_chromosome in chr_in_bam){
-  
+
   message(paste("Analyzing chromosome:",each_chromosome))
   
   # Define chr subset reference sequence
@@ -338,18 +347,18 @@ for (each_chromosome in chr_in_bam){
     # }
     
     intervals <- seq_with_uneven_last(from=1,to=size_chr,by=target_bin_size)
-    
-    if (length(intervals)==1){
-      p_for_read_length_extract <- ScanBamParam(which=GRanges(
-        Rle(each_chromosome), 
-        IRanges(1, size_chr)),
-        what=c("pos","qwidth"))
-      
-      read_length <- unlist(scanBam(bamPath, param=p_for_read_length_extract))[2]
-      intervals <- c(intervals[1],intervals[1]+read_length)
-      
-      rm(p_for_read_length_extract)
-    }
+    # 
+    # if (length(intervals)==1){
+    #   p_for_read_length_extract <- ScanBamParam(which=GRanges(
+    #     Rle(each_chromosome), 
+    #     IRanges(1, intervals[[2]])),
+    #     what=c("pos","qwidth"))
+    #   
+    #   read_length <- unlist(scanBam(bamPath, param=p_for_read_length_extract))[2]
+    #   intervals <- c(intervals[1],intervals[1]+read_length)
+    #   
+    #   rm(p_for_read_length_extract)
+    # }
     
     # define coordinates of sliding windows
     sliding_windows_per_bam_region=data.frame(chr=each_chromosome,
@@ -382,8 +391,12 @@ for (each_chromosome in chr_in_bam){
       do.call(
         rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mc.cores=number_cores,mc.preschedule = F))
 
-    master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
-
+    per_chrom_filtered_calls <- filter_and_annotate_calls(per_bam_region_indel_records)
+    
+    #master_indel_record_table <- rbind(master_indel_record_table,per_chrom_filtered_calls)
+    
+    #master_indel_record_table <- rbind(master_indel_record_table,per_bam_region_indel_records)
+    
     # # Find indels in each bam region using all available cores in parallel
     # if (min_indel_length >= 2){
     #   
@@ -410,6 +423,8 @@ for (each_chromosome in chr_in_bam){
 #write a wrapper function around these processing steps to handle cases with no indels found, generate warnings etc.
 
 # remove reads which cover multiple bam regions, were extracted, and searched more than once
+
+
 dup_indices <- duplicated(master_indel_record_table[,c("read_name","chr","start_pos","end_pos","alt_allele")])
 master_indel_record_table_no_dup_reads <- master_indel_record_table[!dup_indices,]
 

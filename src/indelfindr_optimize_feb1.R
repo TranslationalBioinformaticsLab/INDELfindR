@@ -104,13 +104,15 @@ min_read_depth <- args$read_depth_filter
 #zero_based <- args$zero_based
 outname <- args$outname
 
-# To run during dev:
+# #To run during dev:
 # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
+# #bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/miss_validate_igv/miss_5.sorted.bam"
 # bam_region_bin_size <- 100000 #dev-on
 # verbose_arg=FALSE
 # flanking_region_length <- 10
 # target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
-# number_cores <- 8 # Make default 2
+# #target_regions <- "/Users/George/indel_detection_tool_project/indelfindr/dev_scripts/complex_indel_bam.bed"
+# number_cores <- 4 # Make default 2
 # primary_chromosomes <- T
 # min_indel_length <- 3
 # mapq_threshold <- 20
@@ -164,8 +166,8 @@ suppressMessages(library(bettermc))
 #
 #############################################################################################
 
-source("/gpfs/data/dgamsiz/Uzun_Lab/gtollefs/indel_detection_project/running_directory/functions.R")
-#source("/Users/George/indel_detection_tool_project/indelfindr/src/functions.R")
+source("/gpfs/data/dgamsiz/Uzun_Lab/gtollefs/indel_detection_project/running_directory/functions_complex_op.R")
+#source("/Users/George/indel_detection_tool_project/indelfindr/src/functions_complex_op.R")
 
 #############################################################################################
 #
