@@ -84,7 +84,7 @@ parser$add_argument("-dp", "--read_depth_filter", type="double", default=20,
 # parser$add_argument("-z", "--zero_based", action="store_true",
 #                     help="convert variant calls from zero based to one based")
 parser$add_argument("-o", "--outname", default=getwd(),
-                    help="Define the output directory path")
+                    help="Define the output directory path",metavar="filepath")
 
 args <- parser$parse_args()
 
@@ -154,7 +154,7 @@ suppressMessages(library(plyr))
 suppressMessages(library(tidyverse))
 suppressMessages(library(GenomicFeatures))
 suppressMessages(library(BSgenome.Hsapiens.UCSC.hg38)) 
-suppressMessages(library(tictoc)) 
+#suppressMessages(library(tictoc)) 
 suppressMessages(library(bamsignals)) 
 suppressMessages(library(parallel)) 
 suppressMessages(library(inline))
