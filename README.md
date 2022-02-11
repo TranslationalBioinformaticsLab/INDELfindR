@@ -9,11 +9,29 @@ INDELfindR is an R based command line tool for detecting simple and complex inse
 
 INDELfindR is compatible with Linux, Unix, and MacOS.
 
-INDELfindR requires R version >= 4.1.0
+Depends: R (≥ 4.1.0) 
+
+INDELfindR has the following R package dependencies:
+
+```
+argparse/2.1.3
+GenomicAlignments/1.30.0
+plyr/1.8.6
+tidyverse/1.3.1
+GenomicFeatures/1.46.1
+BSgenome.Hsapiens.UCSC.hg38/1.4.4
+bamsignals/1.26.0
+parallel/4.1.1
+inline/0.3.19
+bettermc/1.1.2
+
+```
 
 #### Installation
 
-Install the INDELfindR R package from CRAN to install INDELfindR.
+Install the INDELfindR R package from CRAN to install INDELfindR and all of it's dependencies.
+
+(This will work once INDELfindR package is registered)
 
 ```
 install.packages("INDELfindR")
@@ -22,15 +40,14 @@ install.packages("INDELfindR")
 library(INDELfindR)
 ```
 
+
 ## Quickstart
 
-After installing the INDELfindR R package, run INDELfindR from the command line by calling:
+After installing the INDELfindR R package, download the indelfindr.R script found [here]() and run INDELfindR from the command line by calling:
 
 ```
 Rscript indelfindr.R -b <indexed_bam.bam> (...)
 ```
-
-Please see our documentation(hyperlink here) for full use instructions and parameter option definitions.
 
 ## Usage Instructions
 
@@ -88,8 +105,10 @@ optional arguments:
 
 ## Setting Up the Annotation Databases
 
-Describe Annovar Db prep here
+We provide a shell script template that you may use to call indels with INDELfindR and annotate the resulting VCF output file with ANNOVAR databases. You may download this shell script template [here]().
 
+Describe Annovar Db prep here.
 
 ## Installing with Docker
+
 Describe Docker installation here
