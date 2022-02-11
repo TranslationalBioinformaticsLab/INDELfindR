@@ -52,34 +52,34 @@ parser$add_argument("-a", "--alignment_file", type="character",required=T,
                     help="Filepath to alignment file in bam format",
                     metavar="filename")
 parser$add_argument("-f", "--flanking_region_length", type="integer", default=10, 
-                    help="Minimum number of `=` or `X` CIGAR operators required to flank a string of nearby `I` `D` operators in order for a call to be made",
+                    help="Minimum number of `=` or `X` CIGAR operators required to flank a string of nearby `I` `D` operators in order for a call to be made (default = 10).",
                     metavar="number")
 parser$add_argument("-b", "--bam_bin_size", type="integer", default=100000, 
                     help="Length of non-overlapping sliding windows to use to extract overlapping reads from bam file and store in memory at a time (default = 100000). Larger windows require loading more reads into memory at one time, while smaller windows require longer runtime due to evaluating more reads which overlap neighboring sliding windows and removing more duplicate read calls",
                     metavar="number")
-parser$add_argument("-l", "--min_indel_length", type="integer", default=2, 
-                    help="Minumum number of ref or alt allele basepairs for an indel to be called (default = 5 nucleotides)",
+parser$add_argument("-l", "--min_indel_length", type="integer", default=3, 
+                    help="Minumum number of ref or alt allele basepairs for an indel to be called (default = 3)",
                     metavar="number")
-parser$add_argument("-nr", "--number_reads", type="integer", default=2, 
-                    help="Minumum number of supporting reads for a single given indel to be called",
+parser$add_argument("-nr", "--number_reads", type="integer", default=4, 
+                    help="Minumum number of supporting reads for a single given indel to be called (default = 4)",
                     metavar="number")
 parser$add_argument("-mq", "--mapq_filter", type="integer", default=20, 
-                    help="Minumum read mapping quality required to evaluate a read.",
+                    help="Minumum read mapping quality required to evaluate a read (default = 20).",
                     metavar="number")
 parser$add_argument("-t", "--target_regions", type="character", default=F, 
                     help="File path to .bed file containing regions in which to perform variant calling. Chromosome syntax must match bed file (ex. `Chr1`, `chr1`, or `1`).",
                     metavar="filename")
 parser$add_argument("-nc", "--number_cores", type="integer", default=2, 
-                    help="Number of cores to use for fork/join parallel computation during indel calling and filtering.",
+                    help="Number of cores to use for fork/join parallel computation during indel calling and filtering (default = 2).",
                     metavar="number")
 parser$add_argument("-p", "--primary_chromosomes", action="store_true", default=T, 
-                    help="Call indels in primary chromosomes only ignoring ALT contig alignments (chr1-22,X,Y,M only)."
+                    help="Call indels in primary chromosomes only ignoring ALT contig alignments (chr1-22,X,Y,M only) (default = True)."
 )
 parser$add_argument("-vaf", "--vaf_filter", type="double", default=0.01, 
-                    help="Minumum variant allele freqency required for an indel to be reported",
+                    help="Minumum variant allele freqency required for an indel to be reported (default = 0.01).",
                     metavar="number")
 parser$add_argument("-dp", "--read_depth_filter", type="double", default=20, 
-                    help="Minumum indel range read depth required for an indel to be reported",
+                    help="Minumum indel range read depth required for an indel to be reported (default = 20).",
                     metavar="number")
 # parser$add_argument("-z", "--zero_based", action="store_true",
 #                     help="convert variant calls from zero based to one based")
