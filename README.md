@@ -54,7 +54,7 @@ Rscript indelfindr.R -b <indexed_bam.bam> (...)
 ```
 usage: indelfindr.R [-h] [-v] [-q] -a filename [-f number] [-b number]
                     [-l number] [-nr number] [-mq number] [-t filename]
-                    [-nc number] [-p] [-vaf number] [-dp number] [-o OUTNAME]
+                    [-nc number] [-p] [-vaf number] [-dp number] [-o filepath]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -99,7 +99,7 @@ optional arguments:
   -dp number, --read_depth_filter number
                         Minumum indel range read depth required for an indel
                         to be reported
-  -o OUTNAME, --outname OUTNAME
+  -o filepath, --outname filepath
                         Define the output directory path
 ```
 
