@@ -43,7 +43,7 @@ library(INDELfindR)
 
 ## Quickstart
 
-After installing the INDELfindR R package, download the indelfindr.R script found [here]() and run INDELfindR from the command line by calling:
+After installing the INDELfindR R package, download the indelfindr.R script found [here](https://github.com/TranslationalBioinformaticsLab/INDELfindR/blob/main/src/INDELfindR.R) and run INDELfindR from the command line by calling:
 
 ```
 Rscript indelfindr.R -b <indexed_bam.bam> (...)
