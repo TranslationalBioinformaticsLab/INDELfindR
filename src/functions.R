@@ -403,8 +403,7 @@ write.vcf <- function(master_indel_call_table,phased,output_filename){
 
 # Function 9: Get intervals with last interval included when it is not within the by interval
 
-seq_with_uneven_last <- function (from, to, by) 
-{
+seq_with_uneven_last <- function (from, to, by) {
   vec <- do.call(what = seq, args = list(from, to, by))
   if ( tail(vec, 1) != to ) {
     return(c(vec, to))
@@ -1018,7 +1017,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       consecutive_indel_operator_flag <- T
       #print("TWO")
       
-      # Catch indels which begin at very stard of read and dont have 10bp flanking prior. (Ff the first variant operator is encountered before the 10th bp in the read)
+      # Catch indels which begin at very start of read and dont have 10bp flanking prior. (If the first variant operator is encountered before the 10th bp in the read)
     } else if (operator %in% c("I","D") && each_operator < flanking_region_length && consecutive_indel_operator_flag == F) {
       match_operator_counter <- 0
       indel_candidate_container <- c(indel_candidate_container,operator)
@@ -1026,8 +1025,9 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       #print("TWO.5")
       
       # If there is an immediately adjacent variant operator
-    } else if (operator %in% c("I","D") && (match_operator_counter < flanking_region_length) && consecutive_indel_operator_flag == T){
-      
+    } else if (operator %in% c("I","D","X") && (match_operator_counter < flanking_region_length) && consecutive_indel_operator_flag == T){
+    #} else if (operator %in% c("I","D") && (match_operator_counter < flanking_region_length) && consecutive_indel_operator_flag == T){
+
       indel_candidate_container <- c(indel_candidate_container,operator)
       
       match_operator_counter <- 0
@@ -1035,7 +1035,9 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       #print("THREE")
       
       # count match operators after encountering variant operators
-    } else if ((operator == "=" && consecutive_indel_operator_flag == T) | (operator == "X" && consecutive_indel_operator_flag == T)){
+    } else if (operator == "=" && consecutive_indel_operator_flag == T){
+    #} else if ((operator == "=" && consecutive_indel_operator_flag == T) | (operator == "X" && consecutive_indel_operator_flag == T)){
+      
       indel_candidate_container <- c(indel_candidate_container,operator)
       match_operator_counter = match_operator_counter + 1
       
@@ -1380,4 +1382,39 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
   return(per_bam_region_indel_records)
 } # end run algo all reads function
 
+# Function 17: Filter read records for all indels calls per chromosome (rather than all at once at the end of the script, causing a bottleneck on large bam files)
 
+filter_and_annotate_calls <- function(master_indel_record_table){
+  
+  if (nrow(master_indel_record_table) != 0){
+    
+    dup_indices <- duplicated(master_indel_record_table[,c("read_name","chr","start_pos","end_pos","alt_allele")])
+    master_indel_record_table_no_dup_reads <- master_indel_record_table[!dup_indices,]
+    
+    # get supporting read counts for each unique indel candidate
+    collapsed_read_counts_with_strand <- rename(dplyr::count(master_indel_record_table_no_dup_reads, chr,start_pos,end_pos,refined_cigar_string,collapsed_cigar_string,reference_allele,alt_allele,strand), FREQ = n)
+    
+    collapsed_read_counts <- rename(count(master_indel_record_table_no_dup_reads, chr,start_pos,end_pos,refined_cigar_string,collapsed_cigar_string,reference_allele,alt_allele), FREQ = n)
+    
+    # collapsed_read_counts_with_strand_correction_pvalue_for_writing <- calculate_stand_bias_pval_vaf_and_dp(collapsed_read_counts,master_indel_record_table_no_dup_reads)
+    collapsed_read_counts_with_strand_correction_pvalue_for_writing <- suppressMessages(calculate_strand_bias_pval_vaf_and_dp_parallel(collapsed_read_counts,master_indel_record_table_no_dup_reads,number_cores))
+    
+    # filter by minimum number of supporting reads
+    collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered <- collapsed_read_counts_with_strand_correction_pvalue_for_writing[which(collapsed_read_counts_with_strand_correction_pvalue_for_writing$FREQ>min_supporting_reads & collapsed_read_counts_with_strand_correction_pvalue_for_writing$VAF>=min_vaf  & collapsed_read_counts_with_strand_correction_pvalue_for_writing$DP >= min_read_depth),]
+    
+    # adjust start_pos to reflect padding base
+    collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos <- as.integer(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos)
+    collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- as.integer(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos) # no longer needed after ref and query fix # - 1
+    
+    # # convert variant coordinates from zero-based to 1-based coordinate system (ex. if RefGene was used)
+    # if (zero_based == T){
+    #   collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos <- collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$start_pos + 1
+    #   collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos <- collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered$end_pos + 1
+    # }
+    
+    message(paste0("Found ",nrow(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered), " indels in chromosome: ",each_chromosome,"."))
+    
+    return(collapsed_read_counts_with_strand_correction_pvalue_for_writing_filtered)
+  }
+  
+}
