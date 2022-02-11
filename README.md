@@ -31,7 +31,7 @@ bettermc/1.1.2
 
 Install the INDELfindR R package from CRAN to install INDELfindR and all of it's dependencies.
 
-(This will work once INDELfindR package is registered)
+(This will work once INDELfindR package is registered. Until then they must be downloaded via R.)
 
 ```
 install.packages("INDELfindR")
@@ -39,7 +39,6 @@ install.packages("INDELfindR")
 # test installation
 library(INDELfindR)
 ```
-
 
 ## Quickstart
 
