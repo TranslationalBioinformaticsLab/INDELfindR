@@ -27,17 +27,22 @@ convert_cigar_to_verbose_string <- function(each_cigar_string){
 
 # Function 2.1) Improved Function to Refine M operators as match or mismatch using reference genome hg38
 
-refine_cigar_string <- function(exploded_cigar_string,query_sequence_string,read_pos,query_read_length,each_chromosome,reference_sequence){
+refine_cigar_string <- function(exploded_cigar_string,query_sequence_string,read_pos,query_read_length,each_chromosome,reference_sequence_test,number_leading_softclips){
 
+  reference_sequence <- reference_sequence_test[-1]
   exploded_cigar_string_for_refinement <- exploded_cigar_string
   
-  reference_base_counter <- 0
-  query_base_counter <- 0
+  # reference_sequence <- reference_sequence[-1]
+  # exploded_cigar_string_for_refinement <- exploded_cigar_string
+  
+  reference_base_counter <- number_leading_softclips
+  query_base_counter <- number_leading_softclips
   
   reference_sequence_testing <- unlist(str_split(toString(reference_sequence),""))
   query_sequence_string_testing <- unlist(str_split(toString(query_sequence_string),""))
   
-  for (each_operator in 1:length(exploded_cigar_string_for_refinement)){
+  start_of_search <- number_leading_softclips+1
+  for (each_operator in start_of_search:length(exploded_cigar_string_for_refinement)){
     
     if (exploded_cigar_string_for_refinement[[each_operator]]=="M"){
       
@@ -46,34 +51,37 @@ refine_cigar_string <- function(exploded_cigar_string,query_sequence_string,read
       #print("tick1")
       
       if (reference_sequence_testing[reference_base_counter] == query_sequence_string_testing[query_base_counter]){
-        # print("match")
+        #print("match")
         exploded_cigar_string_for_refinement[[each_operator]] = "="
-        # print("tick2")
+        #print("tick2")
         
       } else {
-        # print("mismatch")
+        print("mismatch")
         exploded_cigar_string_for_refinement[[each_operator]] = "X" 
-        # print("tick3")
+        #print("tick3")
         
       }
       
     } else if (exploded_cigar_string_for_refinement[[each_operator]] == "I"){
       query_base_counter <- query_base_counter + 1
-      # print("tick4")
+     
+      #print("tick4")
       
     } else if (exploded_cigar_string_for_refinement[[each_operator]] == "D"){
       reference_base_counter <- reference_base_counter + 1
-      #  print("QUERY not added")
+      #print("QUERY not added")
       
     }
     
+    # Debug view:
+    # print(paste("Cigar operator:",exploded_cigar_string_for_refinement[each_operator]))
+    # print(paste("Ref counter:",reference_base_counter))
+    # print(paste("Query counter:",query_base_counter))
+    # print(paste("Ref base:",reference_sequence_testing[reference_base_counter]))
+    # print(paste("Query base:",query_sequence_string_testing[query_base_counter]))
+    
   }
-  
-  # Debug view:
-  # print(paste("Cigar operator:",exploded_cigar_string_for_refinement[each_operator]))
-  # print(paste("Ref counter:",reference_base_counter))
-  # print(paste("Query counter:",query_base_counter))
-  
+
   return(exploded_cigar_string_for_refinement)
 }
 
@@ -855,6 +863,7 @@ translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(
   #define Alternate seq:
   # Build query read sequence retrieval coords to with I, X, and =
   
+  query_sequence_string_for_translation[1] <- reference_sequence_for_translation[1]
   alternate_allele_record <- query_sequence_string_for_translation
   
   # if (cigar_coords_for_query_end < cigar_coords_for_query_start){ # Dev off 
@@ -1050,7 +1059,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       # reset the consecutive_indel_operator_flag to false, since string of closely spaced operators is broken
       consecutive_indel_operator_flag = F
       
-      #print("FIVE")
+      print("FIVE")
       
       #print(indel_candidate_container)
       
@@ -1065,11 +1074,11 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       
       # begin conditional min_indel_length conditional      
       if (length(indel_candidate_container) >= min_indel_length){
-        
+      
         cigar_end <- each_operator - flanking_region_length
         cigar_start <- cigar_end-(length(indel_candidate_container)-1)
         cigar_coords <- cigar_start:cigar_end
-        
+      
         # Define indel records and add indel candidate record to per bam region table
         cigar_end_for_query <- each_operator-flanking_region_length-number_deletions_encountered-number_leading_hardclips
         cigar_start_for_query <- cigar_end_for_query-(length(indel_candidate_container)-1-number_deletions_per_candidate)-1 # dev change add -1
@@ -1079,7 +1088,9 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         reference_end_record <- reference_start_record+length(indel_candidate_container) # dev change (remove)
         chr_record <- each_chromosome
         
-        cigar_start_for_reference <- cigar_start-number_leading_softclips-number_leading_hardclips-1
+        # bug fix dev here
+        cigar_start_for_reference <- cigar_start-number_leading_softclips-number_leading_hardclips
+        #cigar_start_for_reference <- cigar_start-number_leading_softclips-number_leading_hardclips-1
         cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container) # dev change remove
         
         #padding_base <- reference_sequence[cigar_start_for_reference-1]
@@ -1132,9 +1143,9 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       # reset the consecutive_indel_operator_flag to false, since string of closely spaced operators is broken
       consecutive_indel_operator_flag = F
       
-      #print("SIX")
+      print("SIX")
       
-      #print(indel_candidate_container)
+      print(indel_candidate_container)
       
       # remove flanking "=" or "X" operators
       
@@ -1185,7 +1196,10 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         reference_end_record <- reference_start_record+length(indel_candidate_container) #-1 # dev change
         
         chr_record <- each_chromosome
-        cigar_start_for_reference <- cigar_start-number_leading_softclips-number_leading_hardclips-1
+        
+        # bug fix dev here:
+        cigar_start_for_reference <- cigar_start-number_leading_softclips-number_leading_hardclips
+        #cigar_start_for_reference <- cigar_start-number_leading_softclips-number_leading_hardclips-1
         cigar_end_for_reference  <- cigar_start_for_reference + length(indel_candidate_container) #-1 # dev change
         
         # # Define indel records and add indel candidate record to per bam region table
@@ -1256,8 +1270,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
 # Function 16: Extract all reads per bam region and run algo. Version to add simple indel padding.
 
 run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num,per_bam_region_indel_records){
-  
-  
+
   bam_region_number <- row_num
   bam_region_chr <- each_chromosome
   bam_region_start <- sliding_windows_per_bam_region$start[row_num]
@@ -1300,7 +1313,7 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
       
     for (read_num in 1:length(gal_with_indels)){
       
-      #print(read_num)
+     # print(read_num) # 6387
       
       # below lines are replaced with which() subset above so mcols isn't repeatedly called without need, since this filter step was costly
       # # get cigar string, check if indel operators are in the read, and decide to do work
@@ -1327,13 +1340,14 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
         
         query_read_length <- length(query_sequence_string)
 
-         #read_strand <- mcols(gal_with_indels)$strand[[read_num]]
-         read_strand <- gal_with_indels@strand[read_num]@values # improved replacement
+        #read_strand <- mcols(gal_with_indels)$strand[[read_num]]
+        read_strand <- gal_with_indels@strand[read_num]@values # improved replacement
          
         # improved replacement
         
         #read_name_record <- (names(gal_with_indels)[[read_num]])
         read_name_record <- gal_with_indels@NAMES[read_num]
+        
         # improved replacement
         
         if (verbose_arg==T){
@@ -1368,10 +1382,12 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
         }
         
         # get reference sequence for alignment region
-        reference_sequence <- Views(hg38_genome_chr_subset, start=read_pos, end=read_pos+query_read_length+number_deletions)[[1]]
+        # bug fix dev here
+        reference_sequence <- Views(hg38_genome_chr_subset, start=read_pos-1, end=read_pos+query_read_length+number_deletions)[[1]]
+        #reference_sequence <- Views(hg38_genome_chr_subset, start=read_pos, end=read_pos+query_read_length+number_deletions)[[1]]
         
         # refine cigar string 
-        refined_cigar_string <- refine_cigar_string(exploded_cigar_string,query_sequence_string,read_pos,query_read_length,each_chromosome,reference_sequence)
+        refined_cigar_string <- refine_cigar_string(exploded_cigar_string,query_sequence_string,read_pos,query_read_length,each_chromosome,reference_sequence,number_leading_softclips)
         
         # Run algorithm on read and collect indel calls
         per_bam_region_indel_records <- run_algo_on_one_read_explicit_args_with_simple_indel_padding(per_bam_region_indel_records,refined_cigar_string,flanking_region_length,query_sequence_string,reference_sequence,read_pos,query_read_length,read_strand,read_name_record,number_leading_softclips,number_leading_hardclips,each_chromosome,min_indel_length)

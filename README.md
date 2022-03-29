@@ -13,25 +13,43 @@ Depends: R (≥ 4.1.0)
 
 INDELfindR has the following R package dependencies:
 
+The following packages can be installed from CRAN:
+
+require(devtools)
+install_version("<each_package>", version = "<version_number")
+
 ```
 argparse/2.1.3
-GenomicAlignments/1.30.0
 plyr/1.8.6
 tidyverse/1.3.1
+inline/0.3.19
+bettermc/1.1.2
+```
+
+While these packages can be installed manually via the Bioconductor 3.14 release:
+
+First, install Bioconductor v3.14
+
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(version = "3.14")
+
+Then install the following packages with Bioconductor 3.14:
+
+BiocManager::install(c("GenomicFeatures", "BSgenome.Hsapiens.UCSC.hg38","bamsignals",GenomicAlignments))
+
+The package versions which are installed via Bioconductor 3.14 should be as follows:
+```
 GenomicFeatures/1.46.1
 BSgenome.Hsapiens.UCSC.hg38/1.4.4
 bamsignals/1.26.0
-parallel/4.1.1
-inline/0.3.19
-bettermc/1.1.2
-
+GenomicAlignments/1.30.0
 ```
-
 #### Installation
 
 Install the INDELfindR R package from CRAN to install INDELfindR and all of it's dependencies.
 
-(This will work once INDELfindR package is registered. Until then they must be downloaded via R.)
+(This will work once INDELfindR package is registered. Until then they must be downloaded manually via R.)
 
 ```
 install.packages("INDELfindR")
@@ -45,7 +63,7 @@ library(INDELfindR)
 After installing the INDELfindR R package, download the indelfindr.R script found [here](https://github.com/TranslationalBioinformaticsLab/INDELfindR/blob/main/src/INDELfindR.R) and run INDELfindR from the command line by calling:
 
 ```
-Rscript indelfindr.R -b <indexed_bam.bam> (...)
+Rscript indelfindr.R -a <indexed_bam.bam> (...)
 ```
 
 ## Usage Instructions

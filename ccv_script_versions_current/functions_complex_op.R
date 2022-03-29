@@ -9,19 +9,19 @@
 # Function 1) Convert bam to long format
 
 convert_cigar_to_verbose_string <- function(each_cigar_string){
-
+  
   cigar_operators <- unlist(str_split(each_cigar_string, "(\\d+)"))[-1]
   number_op_reps <- head(unlist(str_split(each_cigar_string, "[a-zA-Z]+")),-1)
-
+  
   extended_string <- c()
-
+  
   for (number_operators in 1:length(cigar_operators)){
-
+    
     operator_reps <- rep(cigar_operators[number_operators],number_op_reps[number_operators])
     extended_string <- append(extended_string,operator_reps)
-
+    
   }
-
+  
   return(extended_string)
 }
 
@@ -180,13 +180,13 @@ translate_cigar_index_to_ref_and_query_algo_dev_sliding <- function(sliding_wind
   
   return(list(reference_allele_record,alternate_allele_record,cigar_string_record))
   # to access returned objects, use "reference_allele_record <- unlist(results)[[1]]", etc.
-
+  
 }
 
 # Function 3.3: Translate coordinates of windows with significant concentration of variant cigar operators to significant cigar string and ref, alt alleles
 
 translate_cigar_index_to_ref_and_query_v2 <- function(cigar_coords,cigar_coords_for_query,reference_sequence_for_translation,query_sequence_string_for_translation,refined_cigar_string){
-
+  
   cigar_coord_start <- min(cigar_coords)
   cigar_coord_end <- max(cigar_coords)
   
@@ -1051,7 +1051,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       consecutive_indel_operator_flag = F
       
       #print("FIVE")
-      
+
       #print(indel_candidate_container)
       
       first_remove <- length(indel_candidate_container)-(flanking_region_length-1)
@@ -1171,7 +1171,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       if (length(indel_candidate_container) >= min_indel_length){
         
         #print(indel_candidate_container)
-
+        
         cigar_end <- each_operator-num_to_remove
         cigar_start <- cigar_end-(length(indel_candidate_container)-1)
         cigar_coords <- cigar_start:cigar_end
@@ -1256,7 +1256,6 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
 # Function 16: Extract all reads per bam region and run algo. Version to add simple indel padding.
 
 run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num,per_bam_region_indel_records){
-  
   
   bam_region_number <- row_num
   bam_region_chr <- each_chromosome

@@ -1,0 +1,50 @@
+FROM perl:5.20
+FROM r-base:4.1.0
+
+MAINTAINER George george_tollefson@brown.edu
+WORKDIR /app
+ADD . /app
+
+RUN set -xe \
+    && apt-get update \
+    && R -e "install.packages('dplyr',dependencies=TRUE, repos='http://cran.rstudio.com/')" 
+    
+RUN apt-get update -y \
+ && apt-get install  --no-install-recommends -y \
+    apt-utils \
+    git-all \
+    gcc \
+    make \
+    wget 
+    
+LABEL software="ANNOVAR"
+
+#Install Annovar
+
+ENV TOOLS=/app/Programs
+ENV TOOL_NAME=annovar
+ENV TOOL_VERSION=current
+ENV TARBALL=annovar.latest.tar.gz
+ENV TARBALL_FOLDER=$TOOL_NAME
+ENV DEST=$TOOLS/$TOOL_NAME
+ENV PATH=$TOOLS/$TOOL_NAME/bin:$PATH
+
+WORKDIR /app/Programs
+
+RUN tar xf $TARBALL --wildcards *pl ; \
+    rm -rf $TARBALL ; \
+    cd $TARBALL_FOLDER ; \
+    mkdir -p $TOOLS/$TOOL_NAME/bin ; \
+    cp *pl $TOOLS/$TOOL_NAME/bin/ -R ; \
+    mkdir /databases ; \
+    ln -s /databases/ $TOOLS/$TOOL_NAME/bin/humandb ; \
+    cd ../ ; \
+    ls; \
+    cd $DEST ; \
+    annotate_variation.pl -buildver hg38 -downdb -webfrom annovar refGene humandb/ ;\
+    annotate_variation.pl -buildver hg38 -downdb -webfrom annovar clinvar_20210123 humandb/ ;\
+    annotate_variation.pl -buildver hg38 -downdb -webfrom annovar cosmic70 humandb/ ;
+
+WORKDIR /app
+
+CMD ["bash"]
