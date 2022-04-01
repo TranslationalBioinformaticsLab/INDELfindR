@@ -1,6 +1,14 @@
 #Mac Stuff
 .DS_Store
 
+# R package Stuff
+.Rproj.user
+.Rhistory
+.Rdata
+.httr-oauth
+.DS_Store
+inst/doc
+
 # Dev files
 dev_scripts/
 \n
