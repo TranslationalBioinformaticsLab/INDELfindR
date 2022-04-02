@@ -9,7 +9,7 @@ INDELfindR is an R based command line tool for detecting simple and complex inse
 
 INDELfindR is compatible with Linux, MacOS, and Windows. 
 
-*Note:* INDELfindR does not support parallel processing on Windows. Users must specify `--number_cores 1` to run INDELfindR on Windows.
+*Note:* INDELfindR does not support parallel processing on Windows.
 
 Depends: R (≥ 4.1.0) 
 
@@ -61,6 +61,23 @@ install.packages("INDELfindR")
 # test installation
 library(INDELfindR)
 ```
+
+#### Run INDELfindR with Demo Data
+We provide a test bam file for running with your INDELfindR setup. We also provide two output files containing the expected output for you to compare your test run results against.
+
+To run INDELfindR with the demo data we provide, download both the bam file, named EGFR_mutations_indelfindr_demo.bam and the .bai index file, named EGFR_mutations_indelfindr_demo.bam.bai, from the /demo/ directory of our INDELfindR Github repository. Make sure the .bai index file is downloaded after downloading the bam file since the program performs an internal check to make sure that the index file creation date is after the creation data of the bam file. 
+
+Once you've installed the indelfindr R package following the above instructions, you can download the INDELfindR executable Rscript stored in the /INDELfindR_script/ directory of the INDELfindR Github repository, and run it on the command line. To run the demo, run the following command within the directory containing the indelfindr.R Rscript:
+
+```
+Rscript indelfindr -a /<your_path_to_file>/EGFR_mutations_indelfindr_demo.bam -t /<your_path_to_file>/EGFR_regions_of_interest.txt -o EGFR_mutations_indelfindr_demo
+
+```
+
+The output files for this analysis that we provide for your comparison are stored inside the same /demo/ directory and are named EGFR_mutations_indelfindr_demo.vcf and
+EGFR_mutations_indelfindr_demo.indel.cigars.csv.
+
+If the results you recieve are the same as those in our provided demo results files, you are ready to run your analysis!
 
 ## Quickstart
 
@@ -232,4 +249,3 @@ Example run on Windows:
 ```
 docker run --cpuset-cpus="0" -v ${pwd}:/data indelfindr -a /data/test.sorted.bam -o test.sorted -nc 1 -b 100000000 (options)
 ```
-

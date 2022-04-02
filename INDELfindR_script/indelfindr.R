@@ -51,7 +51,7 @@ parser$add_argument("-a", "--alignment_file", type="character",required=T,
 parser$add_argument("-f", "--flanking_region_length", type="integer", default=10,
                     help="Minimum number of `=` or `X` CIGAR operators required to flank a string of nearby `I` `D` operators in order for a call to be made (default = 10).",
                     metavar="number")
-parser$add_argument("-b", "--bam_bin_size", type="integer", default=100000,
+parser$add_argument("-b", "--bam_bin_size", type="integer", default=10000000,
                     help="Length of non-overlapping sliding windows to use to extract overlapping reads from bam file and store in memory at a time (default = 100000). Larger windows require loading more reads into memory at one time, while smaller windows require longer runtime due to evaluating more reads which overlap neighboring sliding windows and removing more duplicate read calls",
                     metavar="number")
 parser$add_argument("-l", "--min_indel_length", type="integer", default=3,
@@ -66,7 +66,7 @@ parser$add_argument("-mq", "--mapq_filter", type="integer", default=20,
 parser$add_argument("-t", "--target_regions", type="character", default=F,
                     help="File path to .bed file containing regions in which to perform variant calling. Chromosome syntax must match bed file (ex. `Chr1`, `chr1`, or `1`).",
                     metavar="filename")
-parser$add_argument("-nc", "--number_cores", type="integer", default=4,
+parser$add_argument("-nc", "--number_cores", type="integer", default=2,
                     help="Number of cores to use for fork/join parallel computation during indel calling and filtering (default = 4).",
                     metavar="number")
 parser$add_argument("-p", "--primary_chromosomes", action="store_true", default=T,
@@ -106,7 +106,7 @@ outname <- args$outname
 # #target_regions <- F
 # target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
 # #target_regions <- "/Users/George/indel_detection_tool_project/indelfindr/dev_scripts/complex_indel_bam.bed"
-# number_cores <- 1 # Make default 2
+# number_cores <- 2 # Make default 2
 # primary_chromosomes <- T
 # min_indel_length <- 3
 # mapq_threshold <- 20
