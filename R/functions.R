@@ -43,11 +43,12 @@ convert_cigar_to_verbose_string <- function(each_cigar_string){
 #' @param each_chromosome each_chromosome
 #' @param reference_sequence_test reference_sequence
 #' @param number_leading_softclips  number_leading_softclips
+#' @param number_leading_hardclips number_leading_hardclips
 #'
 #' @return exploded_cigar_string_for_refinement
 #' @export
 #'
-refine_cigar_string <- function(exploded_cigar_string,query_sequence_string,read_pos,query_read_length,each_chromosome,reference_sequence_test,number_leading_softclips){
+refine_cigar_string <- function(exploded_cigar_string,query_sequence_string,read_pos,query_read_length,each_chromosome,reference_sequence_test,number_leading_softclips,number_leading_hardclips){
 
   reference_sequence <- reference_sequence_test[-1]
   exploded_cigar_string_for_refinement <- exploded_cigar_string
@@ -58,7 +59,8 @@ refine_cigar_string <- function(exploded_cigar_string,query_sequence_string,read
   reference_sequence_testing <- unlist(str_split(toString(reference_sequence),""))
   query_sequence_string_testing <- unlist(str_split(toString(query_sequence_string),""))
 
-  start_of_search <- number_leading_softclips+1
+  start_of_search <- number_leading_softclips+number_leading_hardclips+1
+
   for (each_operator in start_of_search:length(exploded_cigar_string_for_refinement)){
 
     if (exploded_cigar_string_for_refinement[[each_operator]]=="M"){
@@ -592,7 +594,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
     }
 
     # if the operator matches the reference and there is not a current indel candidate
-    if (operator == "=" && consecutive_indel_operator_flag == F){
+    if ((operator == "=" | operator == "X" ) && consecutive_indel_operator_flag == F){
 
       match_operator_counter = match_operator_counter + 1
       #print("ONE")
@@ -605,7 +607,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       #print("TWO")
 
       # Catch indels which begin at very start of read and dont have 10bp flanking prior. (If the first variant operator is encountered before the 10th bp in the read)
-    } else if (operator %in% c("I","D") && each_operator < flanking_region_length && consecutive_indel_operator_flag == F) {
+    } else if (operator %in% c("I","D") && match_operator_counter < flanking_region_length && consecutive_indel_operator_flag == F) {
       match_operator_counter <- 0
       indel_candidate_container <- c(indel_candidate_container,operator)
       consecutive_indel_operator_flag <- T
@@ -627,6 +629,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       match_operator_counter = match_operator_counter + 1
 
       #print("FOUR")
+
     }
 
     # Check for complete indel match: if there are more than 10 match operators after a candidate indel is found. See below for exception for indel reaching end of read.
@@ -764,14 +767,14 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
         cigar_string_record <- unexplode_cigar_string(exploded_cigar_string_record)
 
         candidate_indel_record <-c(chr=chr_record,
-                                        start_pos=reference_start_record,
-                                        end_pos=reference_end_record,
-                                        refined_cigar_string=toString(exploded_cigar_string_record),
-                                        collapsed_cigar_string=cigar_string_record,
-                                        reference_allele=reference_allele_record,
-                                        alt_allele=alternate_allele_record,
-                                        strand = as.character(read_strand),
-                                        read_name = read_name_record)
+                                   start_pos=reference_start_record,
+                                   end_pos=reference_end_record,
+                                   refined_cigar_string=toString(exploded_cigar_string_record),
+                                   collapsed_cigar_string=cigar_string_record,
+                                   reference_allele=reference_allele_record,
+                                   alt_allele=alternate_allele_record,
+                                   strand = as.character(read_strand),
+                                   read_name = read_name_record)
 
 
         #add indel record to per region table
@@ -821,12 +824,10 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
   bam_region_end <-  sliding_windows_per_bam_region$end[row_num]
 
   # apply filters:
-
   # 1) isSecondaryAlignment=FALSE
   # 2) isNotPassingQualityControls=FALSE
   # 3) isDuplicate=FALSE
   # 4) isUnmappedQuery=FALSE
-  # use mapq filer=20 arbitrarily until determine which to use
 
   parameters=Rsamtools::ScanBamParam(simpleCigar=FALSE,
                           which=GenomicRanges::GRanges(S4Vectors::Rle(c(sliding_windows_per_bam_region[row_num,1])),
@@ -846,7 +847,6 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
 
     gal_with_indels <- gal[which(grepl(pattern,S4Vectors::mcols(gal)$cigar)==T),]
 
-    # dev optimize end
     if (length(gal_with_indels) >= 1){
 
     for (read_num in 1:length(gal_with_indels)){
@@ -892,11 +892,22 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
           number_leading_hardclips <- 0
         }
 
+        # if (operator_values[length(operator_values)] == "S"){
+        #   number_tailing_softclips <- operator_lengths[length(operator_values)]
+        #   number_tailing_hardclips <- 0
+        # } else if (operator_values[length(operator_values)] == "H"){
+        #   number_tailing_hardclips <- operator_lengths[length(operator_values)]
+        #   number_tailing_softclips <- 0
+        # } else {
+        #   number_tailing_softclips <- 0
+        #   number_tailing_hardclips <- 0
+        # }
+
         # get reference sequence for alignment region
         reference_sequence <- IRanges::Views(hg38_genome_chr_subset, start=read_pos-1, end=read_pos+query_read_length+number_deletions)[[1]]
 
         # refine cigar string
-        refined_cigar_string <- refine_cigar_string(exploded_cigar_string,query_sequence_string,read_pos,query_read_length,each_chromosome,reference_sequence,number_leading_softclips)
+        refined_cigar_string <- refine_cigar_string(exploded_cigar_string,query_sequence_string,read_pos,query_read_length,each_chromosome,reference_sequence,number_leading_softclips,number_leading_hardclips)
 
         # Run algorithm on read and collect indel calls
         per_bam_region_indel_records <- run_algo_on_one_read_explicit_args_with_simple_indel_padding(per_bam_region_indel_records,refined_cigar_string,flanking_region_length,query_sequence_string,reference_sequence,read_pos,query_read_length,read_strand,read_name_record,number_leading_softclips,number_leading_hardclips,each_chromosome,min_indel_length)
@@ -1067,34 +1078,14 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
     } else if (target_regions == FALSE){ #end targeted region mode conditional
 
       # do all analysis per chromosome, per bam region chunk alignment region, per read in alignment region
-
       size_chr <- chg38_chromosome_lengths[which(chg38_chromosome_lengths[,1]==each_chromosome),2]
-
-      # p_for_chr_extract <- ScanBamParam(which=GRanges(
-      #   Rle(each_chromosome),
-      #   IRanges(1, size_chr)),
-      #   what=c("pos"))
-
-      # max_pos<- max(na.omit(unlist(scanBam(bamPath, param=p_for_chr_extract)))) # add na omit for finding max read start when there are NA positions returned - find out why and decide if should remove them.
-      # min_pos<- min(na.omit(unlist(scanBam(bamPath, param=p_for_chr_extract)))) # add na omit for finding max read start when there are NA positions returned - find out why and decide if should remove them.
-
-      # get total number reads
-      #overlap.counts <- suppressMessages((bamCount(bamPath,GRanges(Rle(each_chromosome,1), IRanges(start=min_pos, end=max_pos)))))
-
       target_bin_size <- bam_region_bin_size
-
-      # if (max_pos-min_pos < bam_region_bin_size){
-      #   target_bin_size <- max_pos-min_pos
-      # }
-
       intervals <- seq_with_uneven_last(from=1,to=size_chr,by=target_bin_size)
 
       # define coordinates of sliding windows
       sliding_windows_per_bam_region=data.frame(chr=each_chromosome,
                                                 start=intervals[-(length(intervals))],
                                                 end=intervals[-1])
-
-      #rm(p_for_chr_extract)
 
       # Initialize dataframe for collecting each bam region indel calls
       per_bam_region_indel_records <- c("chr",
@@ -1108,11 +1099,11 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
                                         "read_name")  %>% purrr::map_dfc(stats::setNames, object = list(as.character()))
 
       # Find indels in each bam region using all available cores in parallel
-
       per_bam_region_indel_records <-
         do.call(
           rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mapq_threshold,bamPath,each_chromosome,sliding_windows_per_bam_region,verbose_arg,hg38_genome_chr_subset,flanking_region_length,min_indel_length,mc.cores=number_cores,mc.preschedule = F))
 
+      # Apply filters to indel call list per chromosome results table
       per_chrom_filtered_calls <- filter_and_annotate_calls(per_bam_region_indel_records,mapq_threshold,bamPath,number_cores,min_supporting_reads,min_vaf,min_read_depth,each_chromosome)
 
       master_indel_record_table <- rbind(master_indel_record_table,per_chrom_filtered_calls)
@@ -1134,10 +1125,10 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
   #dir.create(file.path(outname)) # suppress warnings
 
   # write out VCF file
-  write.vcf(master_indel_record_table,phased=FALSE,paste0(outname,".vcf"))
+  write.vcf(master_indel_record_table,phased=FALSE,paste0(outname,".indelfindr.vcf"))
 
   #write out data table with cigar string
-  write.table(master_indel_record_table,paste0(outname,".indel.cigars.csv"),sep=",",row.names=F)
+  write.table(master_indel_record_table,paste0(outname,".indelfindr.cigars.csv"),sep=",",row.names=F)
 
   message("Run Complete")
 

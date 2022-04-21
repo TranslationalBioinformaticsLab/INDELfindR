@@ -3,22 +3,23 @@
 ## About
 INDELfindR is an R based command line tool for detecting simple and complex insertion deletion (INDEL) variants which outputs variant calls in a VCF v4.3 file compatible with downstream analysis and annotation tools.
 
-## Setup
+## Installation and Setup
 
 #### Requirements
 
 INDELfindR is compatible with Linux, MacOS, and Windows. 
 
-*Note:* INDELfindR does not support parallel processing on Windows.
+*Note:* INDELfindR does not support parallel processing on Windows. When running on Windows, be sure to use the flag `-nc 1`  to instruct the script to use one core.
 
 Depends: R (≥ 4.1.0) 
+
+We have developed a Docker image to run INDELfindR. To use Docker to setup and run INDELfindR, see the bottom of this README document. 
+
+To install and set up INDELfindR without Docker, follow the instructions below.
 
 INDELfindR has the following R package dependencies:
 
 The following packages can be installed from CRAN:
-
-require(devtools)
-install_version("<each_package>", version = "<version_number")
 
 ```
 argparse/2.1.3
@@ -30,7 +31,15 @@ purrr/0.3.4
 dplyr/1.0.8
 ```
 
-While these packages can be installed manually via the Bioconductor 3.14 release:
+To install the required dependency versions use the devtools R package:
+
+```
+if(!require(devtools)) install.packages("devtools")
+require(devtools)
+install_version("<each_package>", version = "<version_number")
+```
+
+Several packages need to be installed via the Bioconductor 3.14 release.
 
 First, install Bioconductor v3.14
 
@@ -42,24 +51,12 @@ Then install the following packages with Bioconductor 3.14:
 
 BiocManager::install(c("GenomicFeatures", "BSgenome.Hsapiens.UCSC.hg38","bamsignals",GenomicAlignments))
 
-The package versions which are installed via Bioconductor 3.14 should be as follows:
+The package versions which are installed via Bioconductor 3.14 in the command above should be as follows:
 ```
 GenomicFeatures/1.46.1
 BSgenome.Hsapiens.UCSC.hg38/1.4.4
 bamsignals/1.26.0
 GenomicAlignments/1.30.0
-```
-#### Installation
-
-Install the INDELfindR R package from CRAN to install INDELfindR and all of it's dependencies.
-
-(This will work once INDELfindR package is registered. Until then they must be downloaded manually via R.)
-
-```
-install.packages("INDELfindR")
-
-# test installation
-library(INDELfindR)
 ```
 
 #### Run INDELfindR with Demo Data
@@ -105,7 +102,7 @@ optional arguments:
   -f number, --flanking_region_length number
                         Minimum number of `=` or `X` CIGAR operators required
                         to flank a string of nearby `I` `D` operators in order
-                        for a call to be made
+                        for a call to be made (default = 10).
   -b number, --bam_bin_size number
                         Length of non-overlapping sliding windows to use to
                         extract overlapping reads from bam file and store in
@@ -115,30 +112,32 @@ optional arguments:
                         evaluating more reads which overlap neighboring
                         sliding windows and removing more duplicate read calls
   -l number, --min_indel_length number
-                        Minumum number of ref or alt allele basepairs for an
-                        indel to be called (default = 5 nucleotides)
+                        Minimum number of ref or alt allele basepairs for an
+                        indel to be called (default = 3)
   -nr number, --number_reads number
-                        Minumum number of supporting reads for a single given
-                        indel to be called
+                        Minimum number of supporting reads for a single given
+                        indel to be called (default = 4)
   -mq number, --mapq_filter number
-                        Minumum read mapping quality required to evaluate a
-                        read.
+                        Minimum read mapping quality required to evaluate a
+                        read (default = 20).
   -t filename, --target_regions filename
                         File path to .bed file containing regions in which to
                         perform variant calling. Chromosome syntax must match
                         bed file (ex. `Chr1`, `chr1`, or `1`).
   -nc number, --number_cores number
                         Number of cores to use for fork/join parallel
-                        computation during indel calling and filtering.
+                        computation during indel calling and filtering
+                        (default = 4).
   -p, --primary_chromosomes
                         Call indels in primary chromosomes only ignoring ALT
-                        contig alignments (chr1-22,X,Y,M only).
+                        contig alignments (chr1-22,X,Y,M only) (default =
+                        True).
   -vaf number, --vaf_filter number
-                        Minumum variant allele freqency required for an indel
-                        to be reported
+                        Minimum variant allele freqency required for an indel
+                        to be reported (default = 0.01).
   -dp number, --read_depth_filter number
-                        Minumum indel range read depth required for an indel
-                        to be reported
+                        Minimum indel range read depth required for an indel
+                        to be reported (default = 10).
   -o filepath, --outname filepath
                         Define the output directory path
 ```
@@ -181,7 +180,7 @@ See this ink for complete instructions: https://annovar.openbioinformatics.org/e
 I've included my commands below but I would use the link above for complete instructions.
 
 #### Get Download Authorization Code
-echo "youremail@brown.edu:your_email_password" | base64
+echo "youremail@institution.edu:your_email_password" | base64
 
 (this produces a base64 code which you can copy and paste into the commands below)
 
@@ -236,7 +235,10 @@ Once Docker is installed, double-click the Docker.app in the Applications folder
 
 ### Running INDELfindR with Docker
 
-Once Docker is running, you can run INDELfindR by running the Docker commands below in the Mac/Linux terminal or Windows PowerShell. All INDELfindR command line arguments may be specified after the  call to `indelfindr` in the following `docker run` commands.
+Once Docker is running and you may want to increase the amount of resources that are available to Docker if you are running on a local computer.
+To do this, click on the Docker whale icon, navigate to Preferences > Resources (Advanced) and increase memory to at least 4GB and CPUs to 4.
+
+You can run INDELfindR by running the Docker commands below in the Mac/Linux terminal or Windows PowerShell. All INDELfindR command line arguments may be specified after the  call to `indelfindr` in the following `docker run` commands.
 
 Example run on Mac or Linux:
 
@@ -245,7 +247,33 @@ docker run --cpuset-cpus="0-1" -v "$PWD":/data indelfindr -a /data/test.sorted.b
 ```
 
 Example run on Windows:
-*Reminder*: --number_cores is set to 1 . (In `docker run`, `--cpuset-cpus="0"` specifies  the first core - core "0")
+*Reminder*: Since parallel processing is not supported on Windows, --number_cores is set to 1 . (In `docker run`, `--cpuset-cpus="0"` specifies  the first core - core "0")
 ```
 docker run --cpuset-cpus="0" -v ${pwd}:/data indelfindr -a /data/test.sorted.bam -o test.sorted -nc 1 -b 100000000 (options)
 ```
+
+### Running INDELfindR with Singularity on Shared Servers
+
+Build a Singlularity image using the INDELfindR image from DockerHub:
+
+```
+singularity build indelfindr_test.simg docker://uzunlab/indelfindr:1.0
+```
+
+You may need to bind the data directory paths to your Singularity path to be able to read in and write data to your filesystem. You need to replace the paths to the data directories to reflect your own file system paths.
+
+```
+export SINGULARITY_BINDPATH="/gpfs/scratch,/gpfs/data" singularity shell indelfindr_test
+```
+
+Run INDELfindR Singlularity Image:
+
+```
+vcf_prefix="sample_1"
+dir="/<data_directory_path>/"
+
+singularity run indelfindr_test.simg -a $dir/bams/${vcf_prefix}.sorted.bam --bam_bin_size 100000000 --outname $dir/variant_calling/${vcf_prefix}.indelfindr.singularity.test -nc 1
+```
+
+
+
