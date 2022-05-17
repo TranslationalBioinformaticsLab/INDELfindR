@@ -536,7 +536,9 @@ translate_cigar_index_to_ref_and_query_v2_with_simple_indel_padding <- function(
 
   # define Reference seq:
   # build reference sequence retrieval coords with D, X, and =
-  reference_indices <- sort(c(1,D_indices,X_indices,equals_indices))
+  reference_indices_pre <- sort(c(1,D_indices,X_indices,equals_indices))
+  number_ref_bases_to_get <- length(reference_indices_pre)
+  reference_indices <- c(1:number_ref_bases_to_get)
   reference_allele_record <- reference_sequence_for_translation[reference_indices]
 
   if (length(reference_allele_record) == 0){
@@ -705,7 +707,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
       # reset the consecutive_indel_operator_flag to false, since string of closely spaced operators is broken
       consecutive_indel_operator_flag = F
 
-      #print("SIX")
+     # print("SIX")
       #print(indel_candidate_container)
 
       # remove flanking "=" or "X" operators
@@ -818,6 +820,7 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
 #'
 run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num,per_bam_region_indel_records,mapq_threshold,bamPath,each_chromosome,sliding_windows_per_bam_region,verbose_arg,hg38_genome_chr_subset,flanking_region_length,min_indel_length){
 
+  #print(row_num)
   bam_region_number <- row_num
   bam_region_chr <- each_chromosome
   bam_region_start <- sliding_windows_per_bam_region$start[row_num]
@@ -851,7 +854,7 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
 
     for (read_num in 1:length(gal_with_indels)){
 
-     # print(read_num) #debugging line
+     #print(read_num) #debugging line
 
        cigar_string <- gal_with_indels@cigar[[read_num]] # improved replacement
        query_sequence_string <- gal_with_indels@elementMetadata@listData$seq[[read_num]]# improved replacement
