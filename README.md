@@ -80,7 +80,8 @@ If the results you recieve are the same as those in our provided demo results fi
 
 INDELfindR accepts indexed BAM files as input. INDELfindR only accepts human DNA sequence data which has been aligned to the hg38 reference genome version.
 
-After installing the INDELfindR R package, download the indelfindr.R script found [here](https://github.com/TranslationalBioinformaticsLab/INDELfindR/blob/main/src/INDELfindR.R) and run INDELfindR from the command line by calling:
+After installing the INDELfindR R package, download the [indelfindr.R script](https://github.com/TranslationalBioinformaticsLab/INDELfindR/R/indelfindr.R) and [functions.R script](https://github.com/TranslationalBioinformaticsLab/INDELfindR/R/functions.R) and store them in the same directory. 
+You can then run INDELfindR from the command line by navigating to the directory containing the running script and running the following command:
 
 ```
 Rscript indelfindr.R -a <indexed_bam.bam> (options)
