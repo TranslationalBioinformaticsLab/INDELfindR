@@ -144,7 +144,7 @@ optional arguments:
 
 ## Running INDELfindR with ANNOVAR Variant Annotation
 
-We provide a shell script template that you may use to call indels with INDELfindR and annotate the resulting VCF output file with ANNOVAR databases on Unix systems. You may download this shell script template [here]().
+We provide a shell script template that you may use to call indels with INDELfindR and annotate the resulting VCF output file with ANNOVAR databases on Unix systems. You may download this shell script template [here](https://github.com/TranslationalBioinformaticsLab/INDELfindR/blob/main/demo/indelfindr_example_shell_script.sh).
 
 ## ANNOVAR Setup for INDELfindR
 
