@@ -59,23 +59,6 @@ bamsignals/1.26.0
 GenomicAlignments/1.30.0
 ```
 
-#### Run INDELfindR with Demo Data
-We provide a test bam file for running with your INDELfindR setup. We also provide two output files containing the expected output for you to compare your test run results against.
-
-To run INDELfindR with the demo data we provide, download both the bam file, named EGFR_mutations_indelfindr_demo.bam and the .bai index file, named EGFR_mutations_indelfindr_demo.bam.bai, from the /demo/ directory of our INDELfindR Github repository. Make sure the .bai index file is downloaded after downloading the bam file since the program performs an internal check to make sure that the index file creation date is after the creation data of the bam file. 
-
-Once you've installed the indelfindr R package following the above instructions, you can download the INDELfindR executable Rscript stored in the /INDELfindR_script/ directory of the INDELfindR Github repository, and run it on the command line. To run the demo, run the following command within the directory containing the indelfindr.R Rscript:
-
-```
-Rscript indelfindr -a /<your_path_to_file>/EGFR_mutations_indelfindr_demo.bam -t /<your_path_to_file>/EGFR_regions_of_interest.txt -o EGFR_mutations_indelfindr_demo
-
-```
-
-The output files for this analysis that we provide for your comparison are stored inside the same /demo/ directory and are named EGFR_mutations_indelfindr_demo.vcf and
-EGFR_mutations_indelfindr_demo.indel.cigars.csv.
-
-If the results you recieve are the same as those in our provided demo results files, you are ready to run your analysis!
-
 ## Quickstart
 
 INDELfindR accepts indexed BAM files as input. INDELfindR only accepts human DNA sequence data which has been aligned to the hg38 reference genome version.
@@ -142,6 +125,23 @@ optional arguments:
   -o filepath, --outname filepath
                         Define the output directory path
 ```
+
+#### Run INDELfindR with Demo Data
+We provide a test bam file for running with your INDELfindR setup. We also provide two output files containing the expected output for you to compare your test run results against.
+
+To run INDELfindR with the demo data we provide, download both the bam file, named EGFR_mutations_indelfindr_demo.bam and the .bai index file, named EGFR_mutations_indelfindr_demo.bam.bai, from the /demo/ directory of our INDELfindR Github repository. Make sure the .bai index file is downloaded after downloading the bam file since the program performs an internal check to make sure that the index file creation date is after the creation data of the bam file. 
+
+Once you've installed the indelfindr R package following the above instructions, you can download the INDELfindR executable Rscript stored in the /INDELfindR_script/ directory of the INDELfindR Github repository, and run it on the command line. To run the demo, run the following command within the directory containing the indelfindr.R Rscript:
+
+```
+Rscript indelfindr -a /<your_path_to_file>/EGFR_mutations_indelfindr_demo.bam -t /<your_path_to_file>/EGFR_regions_of_interest.txt -o EGFR_mutations_indelfindr_demo
+
+```
+
+The output files for this analysis that we provide for your comparison are stored inside the same /demo/ directory and are named EGFR_mutations_indelfindr_demo.vcf and
+EGFR_mutations_indelfindr_demo.indel.cigars.csv.
+
+If the results you recieve are the same as those in our provided demo results files, you are ready to run your analysis!
 
 ## Running INDELfindR with ANNOVAR Variant Annotation
 
