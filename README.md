@@ -160,7 +160,7 @@ https://annovar.openbioinformatics.org/en/latest/user-guide/startup/
 
 Note: avsnp150 (below) and is a left aligned dbsnp database for use with left aligned vcf. 
 
-I chose avsnp150 from ANNOVAR, instead of downloading dbSNP build 155 and preparing a database from scratch, since it includes annovar indexes for faster annotation.
+avsnp150  was chosen from ANNOVAR, instead of downloading dbSNP build 155 and preparing a database from scratch, since it includes annovar indexes for faster annotation.
 
 ```bash
 
