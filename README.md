@@ -41,7 +41,7 @@ install_version("<each_package>", version = "<version_number")
 
 Several packages need to be installed via the Bioconductor 3.14 release.
 
-First, install Bioconductor v3.14
+First, install Bioconductor v.3.14
 
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
