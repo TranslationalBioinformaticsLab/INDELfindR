@@ -1,7 +1,7 @@
 # INDELfindR
 
 ## About
-INDELfindR is an R based command line tool for detecting simple and complex insertion deletion (INDEL) variants which outputs variant calls in a VCF v4.3 file compatible with downstream analysis and annotation tools.
+INDELfindR is an R based command line tool for detecting simple and complex insertion deletion (INDEL) which outputs indel calls in a VCF v.4.3 file compatible with downstream analysis and annotation tools.
 
 ## Installation and Setup
 
