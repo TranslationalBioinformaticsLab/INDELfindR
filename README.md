@@ -1,7 +1,7 @@
 # INDELfindR
 
 ## About
-INDELfindR is an R based command line tool for detecting simple and complex insertion deletion (INDEL) variants which outputs variant calls in a VCF v4.3 file compatible with downstream analysis and annotation tools.
+INDELfindR is an R based command line tool for detecting simple and complex insertion deletion (INDEL) which outputs indel calls in a VCF v.4.3 file compatible with downstream analysis and annotation tools.
 
 ## Installation and Setup
 
@@ -41,7 +41,7 @@ install_version("<each_package>", version = "<version_number")
 
 Several packages need to be installed via the Bioconductor 3.14 release.
 
-First, install Bioconductor v3.14
+First, install Bioconductor v.3.14
 
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
@@ -160,7 +160,7 @@ https://annovar.openbioinformatics.org/en/latest/user-guide/startup/
 
 Note: avsnp150 (below) and is a left aligned dbsnp database for use with left aligned vcf. 
 
-I chose avsnp150 from ANNOVAR, instead of downloading dbSNP build 155 and preparing a database from scratch, since it includes annovar indexes for faster annotation.
+avsnp150  was chosen from ANNOVAR, instead of downloading dbSNP build 155 and preparing a database from scratch, since it includes annovar indexes for faster annotation.
 
 ```bash
 
