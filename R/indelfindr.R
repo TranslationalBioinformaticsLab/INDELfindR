@@ -25,7 +25,7 @@ cat(logo)
 cat("
 #############################################################################################\n
 \n
-Thank you for using INDELfindR:\nA tool for detecting somatic insertion deletions\nwritten in R v4.1.0\n
+Thank you for using INDELfindR:\nA tool for detecting somatic insertion and deletion events\nwritten in R v4.1.0\n
 \n
 #############################################################################################\n \n")
 
@@ -97,8 +97,13 @@ min_vaf <- args$vaf_filter
 min_read_depth <- args$read_depth_filter
 outname <- args$outname
 
-# #To run during dev:
-#bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/subset_exome_tumor_validate.sorted.bam"
+#############################################################################################
+#
+# #To run during dev for debugging:
+#
+#############################################################################################
+
+# bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/subset_exome_tumor_validate.sorted.bam"
 # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
 # #bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/miss_validate_igv/miss_5.sorted.bam"
 # bam_region_bin_size <- 100000000 #dev-on
@@ -116,7 +121,6 @@ outname <- args$outname
 # min_read_depth <- 10
 # #zero_based <- F
 # outname <- "/Users/George/indel_detection_tool_project/test_output_dir/test_vcf_output"
-
 # Example command line run
 # Rscript indelfindr.R -a /Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam -t /Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt
 
