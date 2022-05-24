@@ -90,7 +90,7 @@ optional arguments:
   -b number, --bam_bin_size number
                         Length of non-overlapping sliding windows to use to
                         extract overlapping reads from bam file and store in
-                        memory at a time (default = 10000000). Larger windows
+                        memory at a time (default = 10000000). *Note:* Larger windows
                         require loading more reads into memory at one time,
                         while smaller windows require longer runtime due to
                         evaluating more reads which overlap neighboring
