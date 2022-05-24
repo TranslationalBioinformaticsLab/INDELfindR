@@ -52,7 +52,7 @@ parser$add_argument("-f", "--flanking_region_length", type="integer", default=10
                     help="Minimum number of `=` or `X` CIGAR operators required to flank a string of nearby `I` `D` operators in order for a call to be made (default = 10).",
                     metavar="number")
 parser$add_argument("-b", "--bam_bin_size", type="integer", default=10000000,
-                    help="Length of non-overlapping sliding windows to use to extract overlapping reads from bam file and store in memory at a time (default = 100000). Larger windows require loading more reads into memory at one time, while smaller windows require longer runtime due to evaluating more reads which overlap neighboring sliding windows and removing more duplicate read calls",
+                    help="Length of non-overlapping sliding windows to use to extract overlapping reads from bam file and store in memory at a time (default = 10000000). Larger windows require loading more reads into memory at one time, while smaller windows require longer runtime due to evaluating more reads which overlap neighboring sliding windows and removing more duplicate read calls",
                     metavar="number")
 parser$add_argument("-l", "--min_indel_length", type="integer", default=3,
                     help="Minimum number of ref or alt allele basepairs for an indel to be called (default = 3)",
