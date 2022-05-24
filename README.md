@@ -90,7 +90,7 @@ optional arguments:
   -b number, --bam_bin_size number
                         Length of non-overlapping sliding windows to use to
                         extract overlapping reads from bam file and store in
-                        memory at a time (default = 100000). Larger windows
+                        memory at a time (default = 10000000). Larger windows
                         require loading more reads into memory at one time,
                         while smaller windows require longer runtime due to
                         evaluating more reads which overlap neighboring
@@ -106,12 +106,12 @@ optional arguments:
                         read (default = 20).
   -t filename, --target_regions filename
                         File path to .bed file containing regions in which to
-                        perform variant calling. Chromosome syntax must match
-                        bed file (ex. `Chr1`, `chr1`, or `1`).
+                        perform variant calling. Chromosome syntax of 
+                        bed file must match the aligned reads (ex. `Chr1`, `chr1`, or `1`).
   -nc number, --number_cores number
                         Number of cores to use for fork/join parallel
                         computation during indel calling and filtering
-                        (default = 4).
+                        (default = 2).
   -p, --primary_chromosomes
                         Call indels in primary chromosomes only ignoring ALT
                         contig alignments (chr1-22,X,Y,M only) (default =

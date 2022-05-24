@@ -67,7 +67,7 @@ parser$add_argument("-t", "--target_regions", type="character", default=F,
                     help="File path to .bed file containing regions in which to perform variant calling. Chromosome syntax must match bed file (ex. `Chr1`, `chr1`, or `1`).",
                     metavar="filename")
 parser$add_argument("-nc", "--number_cores", type="integer", default=2,
-                    help="Number of cores to use for fork/join parallel computation during indel calling and filtering (default = 4).",
+                    help="Number of cores to use for fork/join parallel computation during indel calling and filtering (default = 2).",
                     metavar="number")
 parser$add_argument("-p", "--primary_chromosomes", action="store_true", default=T,
                     help="Call indels in primary chromosomes only ignoring ALT contig alignments (chr1-22,X,Y,M only) (default = True)."
