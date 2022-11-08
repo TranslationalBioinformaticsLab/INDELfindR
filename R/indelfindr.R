@@ -102,7 +102,7 @@ outname <- args$outname
 # #To run during dev for debugging:
 #
 #############################################################################################
-
+#
 # bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/subset_exome_tumor_validate.sorted.bam"
 # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
 # #bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/miss_validate_igv/miss_5.sorted.bam"
@@ -146,6 +146,7 @@ suppressMessages(library(BSgenome.Hsapiens.UCSC.hg38))
 suppressMessages(library(inline))
 suppressMessages(library(bettermc))
 suppressMessages(library(stringr))
+#suppressMessages(library(BSgenome.Hsapiens.UCSC.hg19))
 
 #############################################################################################
 #

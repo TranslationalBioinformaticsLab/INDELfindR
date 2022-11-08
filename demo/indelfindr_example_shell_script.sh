@@ -19,6 +19,6 @@ do
 Rscript indelfindr.R --alignment_file $dir/${vcf_prefix}.bam --target_regions EGFR_regions_of_interest.txt --bam_bin_size 10000000 --flanking_region_length 10 --number_cores 4 --primary_chromosomes --min_indel_length 3 --mapq_filter 20 --number_reads 4 --vaf_filter 0.01 --read_depth_filter 10 --outname $dir/${vcf_prefix}
 
 # To run, un-comment the below ANNOVAR command using databases which are described in the INDELfindR README Annotation with ANNOVAR section.
-#table_annovar.pl $dir/${vcf_prefix}.indelfindr.vcf /gpfs/data/dgamsiz/Uzun_Lab/gtollefs/annovar/humandb -buildver hg38 -out $dir/${vcf_prefix}.indelfindr -remove -protocol refGene,avsnp150,clinvar_20210501,cosmic94_coding -operation g,f,f,f -nastring . -polish -vcfinput
+# table_annovar.pl $dir/${vcf_prefix}.indelfindr.vcf /annovar/humandb -buildver hg38 -out $dir/${vcf_prefix}.indelfindr -remove -protocol refGene,avsnp150,clinvar_20210501,cosmic94_coding -operation g,f,f,f -nastring . -polish -vcfinput
 
 done

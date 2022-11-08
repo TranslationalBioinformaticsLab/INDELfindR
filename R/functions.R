@@ -996,8 +996,11 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
   # get all hg38 chromosome lengths
   chg38_chromosome_lengths <- GenomeInfoDb::getChromInfoFromUCSC("hg38") # all hg38 chr/altcontig lengths  (595 chromosomes/contigs in hg38 annotation)
 
-  # load hg38 reference genome sequence data (688MB) - add option to load this optionally, if user opts to use BBtools Reformat tool, or other aligner, for extended cigar string, it will cut down on runtime and not require loading reference genome sequence into memory but this would require we dev a handler for refined cigar bam input.
+  # load hg38 reference genome sequence data (688MB) - Future dev idea: add option to load this optionally, if user opts to use BBtools Reformat tool, or other aligner, for extended cigar string, it will cut down on runtime and not require loading reference genome sequence into memory but this would require we dev a handler for refined cigar bam input.
   hg38_genome <- BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38
+
+  # load hg19 reference genome sequence data (677MB) -
+  #hg19_genome <- BSgenome.Hsapiens.UCSC.hg19::BSgenome.Hsapiens.UCSC.hg19
 
   #############################################################################################
   #
