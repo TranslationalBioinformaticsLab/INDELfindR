@@ -811,14 +811,14 @@ run_algo_on_one_read_explicit_args_with_simple_indel_padding <- function(per_bam
 #' @param each_chromosome each_chromosome
 #' @param sliding_windows_per_bam_region sliding_windows_per_bam_region
 #' @param verbose_arg verbose_arg
-#' @param hg38_genome_chr_subset hg38_genome_chr_subset
+#' @param genome_chr_subset genome_chr_subset
 #' @param flanking_region_length flanking_region_length
 #' @param min_indel_length min_indel_length
 #'
 #' @return per_bam_region_indel_records
 #' @export
 #'
-run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num,per_bam_region_indel_records,mapq_threshold,bamPath,each_chromosome,sliding_windows_per_bam_region,verbose_arg,hg38_genome_chr_subset,flanking_region_length,min_indel_length){
+run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num,per_bam_region_indel_records,mapq_threshold,bamPath,each_chromosome,sliding_windows_per_bam_region,verbose_arg,genome_chr_subset,flanking_region_length,min_indel_length){
 
   #print(row_num)
   bam_region_number <- row_num
@@ -907,7 +907,7 @@ run_algo_all_reads_each_bam_region_with_simple_indel_padding <- function(row_num
         # }
 
         # get reference sequence for alignment region
-        reference_sequence <- IRanges::Views(hg38_genome_chr_subset, start=read_pos-1, end=read_pos+query_read_length+number_deletions)[[1]]
+        reference_sequence <- IRanges::Views(genome_chr_subset, start=read_pos-1, end=read_pos+query_read_length+number_deletions)[[1]]
 
         # refine cigar string
         refined_cigar_string <- refine_cigar_string(exploded_cigar_string,query_sequence_string,read_pos,query_read_length,each_chromosome,reference_sequence,number_leading_softclips,number_leading_hardclips)
@@ -993,14 +993,22 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
 
   options(scipen=20)
 
+  if (genomeVersion == "hg38"){
+  message("Using UCSC hg38 reference for CIGAR string nucleotide mismatch refinement and chromosome boundary setting.")
   # get all hg38 chromosome lengths
-  chg38_chromosome_lengths <- GenomeInfoDb::getChromInfoFromUCSC("hg38") # all hg38 chr/altcontig lengths  (595 chromosomes/contigs in hg38 annotation)
-
+  chromosome_lengths <- GenomeInfoDb::getChromInfoFromUCSC("hg38") # all hg38 chr/altcontig lengths  (595 chromosomes/contigs in hg38 annotation)
   # load hg38 reference genome sequence data (688MB) - Future dev idea: add option to load this optionally, if user opts to use BBtools Reformat tool, or other aligner, for extended cigar string, it will cut down on runtime and not require loading reference genome sequence into memory but this would require we dev a handler for refined cigar bam input.
-  hg38_genome <- BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38
+  genome <- BSgenome.Hsapiens.UCSC.hg38::BSgenome.Hsapiens.UCSC.hg38
 
-  # load hg19 reference genome sequence data (677MB) -
-  #hg19_genome <- BSgenome.Hsapiens.UCSC.hg19::BSgenome.Hsapiens.UCSC.hg19
+  } else {
+
+  message("Using UCSC hg19 reference for CIGAR string nucleotide mismatch refinement and chromosome boundary setting.")
+  # get all hg19 chromosome lengths
+  chromosome_lengths <- GenomeInfoDb::getChromInfoFromUCSC("hg19") # all hg19 chr/altcontig lengths
+  # load hg19 reference genome sequence data (677MB) - Future dev idea: add option to load this optionally, if user opts to use BBtools Reformat tool, or other aligner, for extended cigar string, it will cut down on runtime and not require loading reference genome sequence into memory but this would require we dev a handler for refined cigar bam input.
+  genome <- BSgenome.Hsapiens.UCSC.hg19::BSgenome.Hsapiens.UCSC.hg19
+
+  }
 
   #############################################################################################
   #
@@ -1035,7 +1043,8 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
     message(paste("Analyzing chromosome:",each_chromosome))
 
     # Define chr subset reference sequence
-    hg38_genome_chr_subset <- hg38_genome[[each_chromosome]]
+    genome_chr_subset <- genome[[each_chromosome]]
+    #genome_chr_subset <- hg19_genome[[each_chromosome]]
 
     if (target_regions != FALSE){
 
@@ -1070,7 +1079,7 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
         # Find indels in each bam region using all available cores in parallel
         per_bam_region_indel_records <-
           do.call(
-            rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mapq_threshold,bamPath,each_chromosome,sliding_windows_per_bam_region,verbose_arg,hg38_genome_chr_subset,flanking_region_length,min_indel_length,mc.cores=number_cores,mc.preschedule = F))
+            rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mapq_threshold,bamPath,each_chromosome,sliding_windows_per_bam_region,verbose_arg,genome_chr_subset,flanking_region_length,min_indel_length,mc.cores=number_cores,mc.preschedule = F))
 
         per_chrom_filtered_calls <- filter_and_annotate_calls(per_bam_region_indel_records,mapq_threshold,bamPath,number_cores,min_supporting_reads,min_vaf,min_read_depth,each_chromosome)
 
@@ -1084,7 +1093,7 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
     } else if (target_regions == FALSE){ #end targeted region mode conditional
 
       # do all analysis per chromosome, per bam region chunk alignment region, per read in alignment region
-      size_chr <- chg38_chromosome_lengths[which(chg38_chromosome_lengths[,1]==each_chromosome),2]
+      size_chr <- chromosome_lengths[which(chromosome_lengths[,1]==each_chromosome),2]
       target_bin_size <- bam_region_bin_size
       intervals <- seq_with_uneven_last(from=1,to=size_chr,by=target_bin_size)
 
@@ -1107,7 +1116,7 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
       # Find indels in each bam region using all available cores in parallel
       per_bam_region_indel_records <-
         do.call(
-          rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mapq_threshold,bamPath,each_chromosome,sliding_windows_per_bam_region,verbose_arg,hg38_genome_chr_subset,flanking_region_length,min_indel_length,mc.cores=number_cores,mc.preschedule = F))
+          rbind, bettermc::mclapply(1:nrow(sliding_windows_per_bam_region),run_algo_all_reads_each_bam_region_with_simple_indel_padding,per_bam_region_indel_records,mapq_threshold,bamPath,each_chromosome,sliding_windows_per_bam_region,verbose_arg,genome_chr_subset,flanking_region_length,min_indel_length,mc.cores=number_cores,mc.preschedule = F))
 
       # Apply filters to indel call list per chromosome results table
       per_chrom_filtered_calls <- filter_and_annotate_calls(per_bam_region_indel_records,mapq_threshold,bamPath,number_cores,min_supporting_reads,min_vaf,min_read_depth,each_chromosome)

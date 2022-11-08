@@ -80,6 +80,8 @@ parser$add_argument("-dp", "--read_depth_filter", type="double", default=10,
                     metavar="number")
 parser$add_argument("-o", "--outname", default=getwd(),
                     help="Define the output directory path",metavar="filepath")
+parser$add_argument("-gv", "--genome_version", default="hg38",
+                    help="Specify the genome version used to align your bam file (hg19 or hg38 only - default hg38)",metavar="hgversion")
 
 args <- parser$parse_args()
 
@@ -96,13 +98,14 @@ min_supporting_reads <- args$number_reads
 min_vaf <- args$vaf_filter
 min_read_depth <- args$read_depth_filter
 outname <- args$outname
+genomeVersion <- args$genome_version
 
 #############################################################################################
 #
 # #To run during dev for debugging:
 #
 #############################################################################################
-#
+# #
 # bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/subset_exome_tumor_validate.sorted.bam"
 # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
 # #bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/miss_validate_igv/miss_5.sorted.bam"
@@ -121,7 +124,7 @@ outname <- args$outname
 # min_read_depth <- 10
 # #zero_based <- F
 # outname <- "/Users/George/indel_detection_tool_project/test_output_dir/test_vcf_output"
-# Example command line run
+# #Example command line run
 # Rscript indelfindr.R -a /Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam -t /Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt
 
 #############################################################################################
@@ -146,7 +149,7 @@ suppressMessages(library(BSgenome.Hsapiens.UCSC.hg38))
 suppressMessages(library(inline))
 suppressMessages(library(bettermc))
 suppressMessages(library(stringr))
-#suppressMessages(library(BSgenome.Hsapiens.UCSC.hg19))
+suppressMessages(library(BSgenome.Hsapiens.UCSC.hg19))
 
 #############################################################################################
 #

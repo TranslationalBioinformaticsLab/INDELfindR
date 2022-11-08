@@ -55,6 +55,7 @@ The package versions which are installed via Bioconductor 3.14 in the command ab
 ```
 GenomicFeatures/1.46.1
 BSgenome.Hsapiens.UCSC.hg38/1.4.4
+BSgenome.Hsapiens.UCSC.hg19/1.4.3
 bamsignals/1.26.0
 GenomicAlignments/1.30.0
 ```
@@ -124,6 +125,8 @@ optional arguments:
                         to be reported (default = 10).
   -o filepath, --outname filepath
                         Define the output directory path
+  -gv hgversion, --genome_version hgversion
+                        Specify the genome version used to align your bam file (hg19 or hg38 only - default hg38)
 ```
 
 #### Run INDELfindR with Demo Data
