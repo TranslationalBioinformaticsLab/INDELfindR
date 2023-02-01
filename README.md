@@ -39,7 +39,7 @@ require(devtools)
 install_version("<each_package>", version = "<version_number")
 ```
 
-Several packages need to be installed via the Bioconductor 3.14 release.
+Several packages need to be installed via the Bioconductor 3.14 release. Do not use later Bioconductor releases for installing INDELfindR dependencies. You can use the [`renv` R package](https://rstudio.github.io/renv/articles/renv.html) to install INDELfindR dependencies and to run INDELfindR if you would like to use a later Bioconductor release on the same system.
 
 First, install Bioconductor v.3.14
 
