@@ -106,14 +106,16 @@ genomeVersion <- args$genome_version
 #
 #############################################################################################
 # #
-# bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/subset_exome_tumor_validate.sorted.bam"
-# bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
-# #bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/miss_validate_igv/miss_5.sorted.bam"
+# bamPath <- "/Users/George/indel_detection_tool_project/last_dev/subset_Control_common.sorted.bam"
+# # bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/subset_exome_tumor_validate.sorted.bam"
+# # bamPath <- "/Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam"
+# # #bamPath <- "/Users/George/indel_detection_tool_project/benchmarking/indelfindr_results/miss_validate_igv/miss_5.sorted.bam"
 # bam_region_bin_size <- 100000000 #dev-on
 # verbose_arg <- FALSE
 # flanking_region_length <- 10
 # target_regions <- F
-# target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
+# #target_regions <-"/Users/George/indel_detection_tool_project/last_dev/subset_last_dev_regions.txt"
+# #target_regions <- "/Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt"
 # #target_regions <- "/Users/George/indel_detection_tool_project/indelfindr/dev_scripts/complex_indel_bam.bed"
 # number_cores <- 2 # Make default 2
 # primary_chromosomes <- T
@@ -123,9 +125,10 @@ genomeVersion <- args$genome_version
 # min_vaf <- 0.01
 # min_read_depth <- 10
 # #zero_based <- F
-# outname <- "/Users/George/indel_detection_tool_project/test_output_dir/test_vcf_output"
-# #Example command line run
-# Rscript indelfindr.R -a /Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam -t /Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt
+# genomeVersion <- "hg19"
+#outname <- "/Users/George/indel_detection_tool_project/test_output_dir/test_vcf_output"
+#Example command line run
+#Rscript indelfindr.R -a /Users/George/indel_detection_tool_project/bam_files_for_testing/EGFR_mutations_reference_dwgsim.sorted.bam -t /Users/George/indel_detection_tool_project/data_for_testing/EGFR_regions_of_interest.txt
 
 #############################################################################################
 #

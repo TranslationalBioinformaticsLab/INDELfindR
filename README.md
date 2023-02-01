@@ -11,7 +11,7 @@ INDELfindR is compatible with Linux, MacOS, and Windows.
 
 *Note:* INDELfindR does not support parallel processing on Windows. When running on Windows, be sure to use the flag `-nc 1`  to instruct the script to use one core.
 
-Depends: R (≥ 4.1.0) 
+Depends: R 4.1.0
 
 We have developed a Docker image to run INDELfindR. To use Docker to setup and run INDELfindR, see the bottom of this README document. 
 

@@ -1030,7 +1030,8 @@ run_indelfindr <- function(bamPath,bam_region_bin_size,verbose_arg,flanking_regi
   if (primary_chromosomes == T){
     #chr_in_bam <- get_primary_chroms(chr_in_bam)
     chr_in_bam <-  c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8","chr9",'chr10',"chr11","chr12","chr13","chr14","chr15","chr16","chr17","chr18","chr19","chr20","chr21","chr22","chrX","chrY","chrM")
-  }
+
+    }
 
   if (target_regions != FALSE) {
     # load target regions
