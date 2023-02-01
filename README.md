@@ -137,7 +137,7 @@ To run INDELfindR with the demo data we provide, download both the bam file, nam
 Once you've installed the indelfindr R package following the above instructions, you can download the INDELfindR executable Rscript stored in the /INDELfindR_script/ directory of the INDELfindR Github repository, and run it on the command line. To run the demo, run the following command within the directory containing the indelfindr.R Rscript:
 
 ```
-Rscript indelfindr -a /<your_path_to_file>/EGFR_mutations_indelfindr_demo.bam -t /<your_path_to_file>/EGFR_regions_of_interest.txt -o EGFR_mutations_indelfindr_demo
+Rscript indelfindr.R -a /<your_path_to_file>/EGFR_mutations_indelfindr_demo.bam -t /<your_path_to_file>/EGFR_regions_of_interest.txt -o EGFR_mutations_indelfindr_demo
 
 ```
 
