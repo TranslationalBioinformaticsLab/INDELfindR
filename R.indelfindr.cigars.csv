@@ -1,4 +1,0 @@
-"chr","start_pos","end_pos","refined_cigar_string","collapsed_cigar_string","reference_allele","alt_allele","FREQ","VAF","DP","strand_bias_pval","ref_forward","ref_rev","alt_forward","alt_rev"
-"chr7",55181316,55181319,"I, I, I","3I","G","GGAC",5,0.116279069767442,43,0.350808956594549,19,19,4,1
-"chr7",55181316,55181331,"I, I, I, I, I, I, I, I, I, I, I, I, I, I, I","15I","G","GATGGCCAGCGTGGAC",27,0.613636363636364,44,0.54774346986151,10,7,13,14
-"chr7",55174772,55174787,"D, D, D, D, D, D, D, D, D, D, D, D, D, D, D","15D","GGAATTAAGAGAAGCA","G",19,0.95,20,0.45,1,0,8,11
